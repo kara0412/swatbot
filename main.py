@@ -23,7 +23,7 @@ swat_count_dict = defaultdict(int)
 inc_regex = re.compile('^\+[0-9]+$')
 dec_regex = re.compile('^-[0-9]+$')
 
-swat_update_string = "%s's swat count has now %s to %d"
+swat_update_string = "%s's swat count has now %s to %d."
 
 def reset_dict():
     swat_count_dict.clear()
