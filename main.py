@@ -12,6 +12,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                      level=logging.INFO)
 TOKEN = os.environ.get('BOT_TOKEN')
 PORT = int(os.environ.get('PORT', '8443'))
+MAX_INC = int(os.environ.get('MAX_INC'))
+MAX_DEC = int(os.environ.get('MAX_DEC'))
+PENALTY = int(os.environ.get('PENALTY'))
+
 updater = Updater(token=TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
@@ -19,8 +23,9 @@ swat_count_dict = defaultdict(int)
 inc_regex = re.compile('^\+[0-9]+$')
 dec_regex = re.compile('^-[0-9]+$')
 
+swat_update_string = "%s's swat count has now %s to %d"
+
 def reset_dict():
-    print("!!!")
     swat_count_dict.clear()
 
 def message_contains_mentions(message):
@@ -61,17 +66,15 @@ def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Hello! I'm SwatBot.")
 
-def add_10(id, name, context, update):
-    swat_count_dict[id] += 10
+def add_penalty(id, name, context, update):
+    swat_count_dict[id] += PENALTY
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Nice try... here's 10 more swats.")
+                             text="Nice try... here's %d more swats." % PENALTY)
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="%s's swat count is now %d!" %
-                                  (name, swat_count_dict[id]))
+                             text=swat_update_string %
+                                  (name, "increased", swat_count_dict[id]))
 
 def mention_response(update, context):
-    print(swat_count_dict)
-    print("hit mention_response")
     entities = message_contains_mentions(update.message)
     text = update.message.text
     from_user = update.message.from_user
@@ -82,22 +85,29 @@ def mention_response(update, context):
                 if entity.type == MessageEntity.TEXT_MENTION:
                     (id, name) = (entity.user.id, entity.user.first_name)
                     if from_user.id == entity.user.id and count < 0:
-                        add_10(id, name, context, update)
+                        add_penalty(id, name, context, update)
                         return
                 else:
                     (id, name) = (entities[entity][1:], entities[entity][1:])
                     if from_user.username == entities[entity][1:] and count < 0:
-                        add_10(id, name, context, update)
+                        add_penalty(id, name, context, update)
                         return
-                if count > 10:
+                if count > MAX_INC:
                     context.bot.send_message(chat_id=update.effective_chat.id,
-                                             text="You can only increase swats "
-                                                  "10 at a time.")
+                                             text="You can only increase swats %d"
+                                                  " at a time." % MAX_INC)
+                elif count < MAX_DEC*(-1):
+                    context.bot.send_message(chat_id=update.effective_chat.id,
+                                             text="You can only decrease swats %d"
+                                                  " at a time." % MAX_DEC)
                 else:
                     swat_count_dict[id] += count
                     context.bot.send_message(chat_id=update.effective_chat.id,
-                                             text="%s's swat count is now %d!" %
-                                                  (name, swat_count_dict[id]))
+                                             text=swat_update_string %
+                                                  (name,
+                                                   "increased" if count >= 0
+                                                   else "decreased",
+                                                   swat_count_dict[id]))
 
 def main():
     """Start the bot."""
