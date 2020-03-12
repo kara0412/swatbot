@@ -161,6 +161,17 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         self.call_handler_with_message("@%s" % self.mention_text)
         assert not self.mock_bot.called
 
+    def test_multiple_swats(self):
+        other_mention_text = "Bobby"
+        other_mentioned_user = User(3, "Bobby", False)
+        other_mention_entity = MessageEntity(MessageEntity.TEXT_MENTION, len(self.mention_text) + 5,
+                                       len(other_mention_text) + 1,
+                                       user=other_mentioned_user)
+        self.call_handler_with_message("@%s +4 @%s +2" % (self.mention_text, other_mention_text),
+                                       entities=[self.mention_entity, other_mention_entity])
+        self.assert_chat_called_with(swat_update_string % (self.mention_text, "increased", 4))
+        self.assert_chat_called_with(swat_update_string % (other_mention_text, "increased", 2))
+
     def test_mention(self):
         self.call_handler_with_message("@%s +4" % self.mention_text)
         self.assert_chat_called_with(swat_update_string % (self.mention_text, "increased", 4))
