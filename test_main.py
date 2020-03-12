@@ -2,7 +2,7 @@ import unittest
 import uuid
 
 from main import mention_response, reset_dict, swat_update_string, \
-    MAX_INC, MAX_DEC, PENALTY, get_count_after_mention
+    MAX_INC, MAX_DEC, PENALTY, get_count_after_mention, SwatFilter
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -91,6 +91,7 @@ class TestMessageSwatCount(unittest.TestCase):
         mention = MessageEntity('MENTION', 0, 4)
         count = get_count_after_mention(mention, text)
         self.assertEqual(count, 0)
+
 
 class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
 

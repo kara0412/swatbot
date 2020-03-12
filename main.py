@@ -20,9 +20,7 @@ updater = Updater(token=TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
 swat_count_dict = defaultdict(int)
-inc_regex = re.compile('^\+[0-9]+$')
-dec_regex = re.compile('^-[0-9]+$')
-
+swat_regex = re.compile('^[\s]+[+-][0-9]+(?:\s|$)')
 swat_update_string = "%s's swat count has now %s to %d."
 
 def reset_dict():
@@ -32,26 +30,19 @@ def message_contains_mentions(message):
     """ Returns a list of MessageEntity mentions/text_mentions if they
         exist, and False if not.
     """
-    entities = message.parse_entities(types=[MessageEntity.TEXT_MENTION,
-                                             MessageEntity.MENTION])
-    return entities or False
+    return message.parse_entities(types=[MessageEntity.TEXT_MENTION,
+                                         MessageEntity.MENTION])
 
 def get_count_after_mention(mention, text):
-    start_index = mention.offset + mention.length + 1
+    start_index = mention.offset + mention.length
     after_mention = text[start_index:]
-    next_word = after_mention.split(' ')[0]
-    if re.match(inc_regex, next_word):
-        return int(next_word[1:])
-    elif re.match(dec_regex, next_word):
-        count = int(next_word[1:])
-        return -count
-    else:
-        return None
+    m = swat_regex.match(after_mention)
+    return int(m.group()) if m else None
 
 class SwatFilter(BaseFilter):
     def filter(self, message):
         entities = message_contains_mentions(message)
-        if entities != False:
+        if entities != {}:
             for entity in entities:
                 count = get_count_after_mention(entity, message.text)
                 return isinstance(count, int)
