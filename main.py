@@ -123,6 +123,16 @@ def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Hello! I'm SwatBot.")
 
+def rules(update, context):
+    text = "1. You can't subtract your own swats.\n2. " \
+           "You can only add %s swats at a time.\n3. " \
+           "You can only subtract %s swats at a time.\n4. " \
+           "You must wait %s minutes between sending swats to any particular person.\n5. " \
+           "You can only send three distinct people swats in a %s minute window." % \
+           (MAX_INC, MAX_DEC, math.floor(PER_PERSON_TIME_LIMIT/60),
+            math.floor(PER_PERSON_TIME_LIMIT/60))
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+
 def add_penalty(from_id, receiver_id, username_present, name, context, update):
     update_user_count_in_db(from_id, receiver_id, username_present, PENALTY)
     new_count = get_user_count_from_db(receiver_id)
@@ -179,8 +189,9 @@ def mention_response(update, context):
 def main():
     """Start the bot."""
     start_handler = CommandHandler('start', start)
+    rules_handler = CommandHandler('rules', rules)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
-    add_handlers_to_dispatcher([start_handler, mention_handler])
+    add_handlers_to_dispatcher([start_handler, rules_handler, mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=PORT, url_path=TOKEN)
     updater.bot.set_webhook(WEBHOOK_URL + TOKEN)
     updater.idle()
