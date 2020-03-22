@@ -5,6 +5,7 @@ from telegram import MessageEntity
 import logging
 import os
 import re
+import psycopg2
 from collections import defaultdict
 from dotenv import load_dotenv
 load_dotenv()
@@ -15,16 +16,18 @@ PORT = int(os.environ.get('PORT', '8443'))
 MAX_INC = int(os.environ.get('MAX_INC'))
 MAX_DEC = int(os.environ.get('MAX_DEC'))
 PENALTY = int(os.environ.get('PENALTY'))
+DATABASE_URL = os.environ.get('DATABASE_URL')
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 updater = Updater(token=TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
-swat_count_dict = defaultdict(int)
+in_memory_swat_count_dict = defaultdict(int)
 swat_regex = re.compile('^[\s]+[+-][0-9]+(?:\s|$)')
 swat_update_string = "%s's swat count has now %s to %d."
 
 def reset_dict():
-    swat_count_dict.clear()
+    in_memory_swat_count_dict.clear()
 
 def message_contains_mentions(message):
     """ Returns a list of MessageEntity mentions/text_mentions if they
@@ -38,6 +41,37 @@ def get_count_after_mention(mention, text):
     after_mention = text[start_index:]
     m = swat_regex.match(after_mention)
     return int(m.group()) if m else None
+
+
+def update_user_count_in_db(user_id, username_present, count):
+    if os.environ.get('ENV') == 'TEST':
+        in_memory_swat_count_dict[user_id] += count
+        return
+    sql = """INSERT INTO users (user_id, username_present, received_swats_count)
+             VALUES (%s, %s, %s)
+             ON CONFLICT (user_id) 
+             DO UPDATE 
+                SET received_swats_count = users.received_swats_count + %s
+                RETURNING received_swats_count;"""
+    cur = conn.cursor()
+    cur.execute(sql, (user_id, username_present, count, count))
+    conn.commit()
+    cur.close()
+
+def get_user_count_from_db(user_id):
+    if os.environ.get('ENV') == 'TEST':
+        return in_memory_swat_count_dict[user_id]
+    sql = """SELECT users.received_swats_count 
+             FROM users
+             WHERE users.user_id=%s"""
+    cur = conn.cursor()
+    cur.execute(sql, (user_id,))
+    result = None
+    if cur.rowcount == 1:
+        result = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    return result
 
 class SwatFilter(BaseFilter):
     def filter(self, message):
@@ -57,13 +91,16 @@ def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Hello! I'm SwatBot.")
 
-def add_penalty(id, name, context, update):
-    swat_count_dict[id] += PENALTY
+def add_penalty(id, username_present, name, context, update):
+    update_user_count_in_db(id, username_present, PENALTY)
+    new_count = get_user_count_from_db(id)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Nice try... here's %d more swats." % PENALTY)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=swat_update_string %
-                                  (name, "increased", swat_count_dict[id]))
+                                  (name, "increased", new_count))
+
+
 
 def mention_response(update, context):
     entities = message_contains_mentions(update.message)
@@ -73,15 +110,16 @@ def mention_response(update, context):
         for entity in entities:
             count = get_count_after_mention(entity, text)
             if isinstance(count, int):
-                if entity.type == MessageEntity.TEXT_MENTION:
-                    (id, name) = (entity.user.id, entity.user.first_name)
+                username_present = entity.type != MessageEntity.TEXT_MENTION
+                if not username_present:
+                    (id, name) = (str(entity.user.id), entity.user.first_name)
                     if from_user.id == entity.user.id and count < 0:
-                        add_penalty(id, name, context, update)
+                        add_penalty(id, username_present, name, context, update)
                         return
                 else:
-                    (id, name) = (entities[entity][1:], entities[entity][1:])
+                    (id, name) = (entities[entity][1:].lower(), entities[entity][1:])
                     if from_user.username == entities[entity][1:] and count < 0:
-                        add_penalty(id, name, context, update)
+                        add_penalty(id, username_present, name, context, update)
                         return
                 if count > MAX_INC:
                     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -92,23 +130,22 @@ def mention_response(update, context):
                                              text="You can only decrease swats %d"
                                                   " at a time." % MAX_DEC)
                 else:
-                    swat_count_dict[id] += count
+                    update_user_count_in_db(id, username_present, count)
+                    new_count = get_user_count_from_db(id)
                     context.bot.send_message(chat_id=update.effective_chat.id,
                                              text=swat_update_string %
                                                   (name,
                                                    "increased" if count >= 0
                                                    else "decreased",
-                                                   swat_count_dict[id]))
+                                                   new_count))
 
 def main():
     """Start the bot."""
-
     start_handler = CommandHandler('start', start)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     add_handlers_to_dispatcher([start_handler, mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=PORT, url_path=TOKEN)
-    updater.bot.set_webhook('https://telegram-swat-bot.herokuapp.com/' + TOKEN)
-
+    updater.bot.set_webhook('https://telegram-swat-bot-stg.herokuapp.com/' + TOKEN)
     updater.idle()
 
 if __name__ == '__main__':

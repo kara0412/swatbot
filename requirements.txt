@@ -4,9 +4,12 @@ cffi==1.14.0
 cryptography==2.8
 decorator==4.4.1
 enum34==1.1.9
+funcsigs==1.0.2
 future==0.18.2
 futures==3.1.1
 ipaddress==1.0.23
+mock==3.0.5
+psycopg2==2.7.5
 py==1.8.1
 pycparser==2.19
 pytest==2.9.1

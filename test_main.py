@@ -1,11 +1,12 @@
 import unittest
+import os
 import uuid
-
 from main import mention_response, reset_dict, swat_update_string, \
-    MAX_INC, MAX_DEC, PENALTY, get_count_after_mention, SwatFilter
+    MAX_INC, MAX_DEC, PENALTY, get_count_after_mention
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
+os.environ['ENV'] = "TEST"
 
 def get_Jen_no_username():
     mention_text = "Jen"
