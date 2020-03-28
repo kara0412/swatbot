@@ -1,7 +1,9 @@
 import unittest
 import uuid
-from main import mention_response, reset_dict, SWAT_UPDATE_STRING, \
-    MAX_INC, MAX_DEC, PENALTY
+from main import mention_response
+from db_helpers import reset_dict
+from settings import MAX_INC, MAX_DEC, PENALTY
+from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -51,6 +53,7 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
             def __init__(self):
                 self.called = False
                 self.called_with = []
+                self.username = "bot"
 
             def send_message(self, chat_id, text):
                 self.called = True
@@ -82,21 +85,23 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         mention_response(update, self.context)
 
 
-    def test_increase_limit(self):
+    def test_penalty_increase_limit(self):
         self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC+1))
-        self.assert_chat_called_with("You can only increase swats %d at a time." % MAX_INC)
+        self.assert_chat_called_with(PENALTY_SCOLDS["SWAT_INC"])
+        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
         self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
         self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "increased", MAX_INC))
 
-    def test_decrease_limit(self):
+    def test_penalty_decrease_limit(self):
         self.call_handler_with_message("@%s -%d" % (self.mention_text, MAX_DEC+1))
-        self.assert_chat_called_with("You can only decrease swats %d at a time." % MAX_DEC)
+        self.assert_chat_called_with(PENALTY_SCOLDS["SWAT_DEC"])
+        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
         self.call_handler_with_message("@%s -%d" % (self.mention_text, MAX_DEC))
         self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "decreased", -MAX_DEC))
 
     def test_penalty_decrease_own_swats(self):
         self.call_handler_with_message("@%s -5" % self.from_user_text, entities=[self.from_user_entity])
-        self.assert_chat_called_with("Nice try... here's %d more swats." % PENALTY)
+        self.assert_chat_called_with(PENALTY_SCOLDS["OWN_SWAT"])
         self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
 
     def test_no_mention_response(self):
