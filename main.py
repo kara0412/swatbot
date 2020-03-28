@@ -1,38 +1,34 @@
 #!/usr/bin/env python
 import math
-
-from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
-from telegram import MessageEntity
 import logging
-import os
 import re
 import time
 import psycopg2
 from collections import defaultdict
-from dotenv import load_dotenv
-load_dotenv()
+
+from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
+from telegram import MessageEntity
+from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY, \
+    DATABASE_URL, PER_PERSON_TIME_LIMIT, ENV
+from strings import SWAT_UPDATE_STRING, COOL_DOWN_STRING, RULES
+
+
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
-WEBHOOK_URL = os.environ.get('WEBHOOK_URL', '')
-TOKEN = os.environ.get('BOT_TOKEN')
-PORT = int(os.environ.get('PORT', '8443'))
-MAX_INC = int(os.environ.get('MAX_INC'))
-MAX_DEC = int(os.environ.get('MAX_DEC'))
-PENALTY = int(os.environ.get('PENALTY'))
-DATABASE_URL = os.environ.get('DATABASE_URL')
-PER_PERSON_TIME_LIMIT = int(os.environ.get('PER_PERSON_TIME_LIMIT'))
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 updater = Updater(token=TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
 in_memory_swat_count_dict = defaultdict(int)
 swat_regex = re.compile('^[\s]+[+-][0-9]+(?:\s|$)')
-swat_update_string = "%s's swat count has now %s to %d."
-cool_down_string = "Whoa there... you just gave swats to %s! Remember, there's " \
-                   "a %s minute cool-down period before you can swat them again."
+
 def reset_dict():
     in_memory_swat_count_dict.clear()
+
+def _env_is_test():
+    return ENV == 'TEST'
 
 def message_contains_mentions(message):
     """ Returns a list of MessageEntity mentions/text_mentions if they
@@ -49,7 +45,7 @@ def get_count_after_mention(mention, text):
 
 
 def update_history_in_db(giver, receiver, count):
-    if os.environ.get('ENV') == 'TEST':
+    if _env_is_test():
         return
     sql = """INSERT INTO history (giver, receiver, count, timestamp)
              VALUES (%s, %s, %s, %s)"""
@@ -59,7 +55,7 @@ def update_history_in_db(giver, receiver, count):
     cur.close()
 
 def should_rate_limit(giver, receiver):
-    if os.environ.get('ENV') == 'TEST':
+    if _env_is_test():
         return False
     sql = """SELECT MAX(timestamp) FROM history
              WHERE giver = %s AND receiver = %s;"""
@@ -75,7 +71,7 @@ def should_rate_limit(giver, receiver):
     return time.time() - result < PER_PERSON_TIME_LIMIT
 
 def update_user_count_in_db(giver_id, receiver_id, username_present, count):
-    if os.environ.get('ENV') == 'TEST':
+    if _env_is_test():
         in_memory_swat_count_dict[receiver_id] += count
         return
     sql = """INSERT INTO users (user_id, username_present, received_swats_count)
@@ -91,7 +87,7 @@ def update_user_count_in_db(giver_id, receiver_id, username_present, count):
     update_history_in_db(giver_id, receiver_id, count)
 
 def get_user_count_from_db(user_id):
-    if os.environ.get('ENV') == 'TEST':
+    if _env_is_test():
         return in_memory_swat_count_dict[user_id]
     sql = """SELECT users.received_swats_count 
              FROM users
@@ -124,13 +120,8 @@ def start(update, context):
                              text="Hello! I'm SwatBot.")
 
 def rules(update, context):
-    text = "1. You can't subtract your own swats.\n2. " \
-           "You can only add %s swats at a time.\n3. " \
-           "You can only subtract %s swats at a time.\n4. " \
-           "You must wait %s minutes between sending swats to any particular person.\n5. " \
-           "You can only send three distinct people swats in a %s minute window." % \
-           (MAX_INC, MAX_DEC, math.floor(PER_PERSON_TIME_LIMIT/60),
-            math.floor(PER_PERSON_TIME_LIMIT/60))
+    text = RULES % (MAX_INC, MAX_DEC, math.floor(PER_PERSON_TIME_LIMIT/60),
+                    math.floor(PER_PERSON_TIME_LIMIT/60))
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def add_penalty(from_id, receiver_id, username_present, name, context, update):
@@ -139,7 +130,7 @@ def add_penalty(from_id, receiver_id, username_present, name, context, update):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Nice try... here's %d more swats." % PENALTY)
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=swat_update_string %
+                             text=SWAT_UPDATE_STRING %
                                   (name, "increased", new_count))
 
 
@@ -166,7 +157,7 @@ def mention_response(update, context):
                 if should_rate_limit(from_user.id, receiver_id):
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=cool_down_string % (name, math.floor(PER_PERSON_TIME_LIMIT / 60)))
+                        text=COOL_DOWN_STRING % (name, math.floor(PER_PERSON_TIME_LIMIT/60)))
                     return
                 if count > MAX_INC:
                     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -180,7 +171,7 @@ def mention_response(update, context):
                     update_user_count_in_db(from_user.id, receiver_id, username_present, count)
                     new_count = get_user_count_from_db(receiver_id)
                     context.bot.send_message(chat_id=update.effective_chat.id,
-                                             text=swat_update_string %
+                                             text=SWAT_UPDATE_STRING %
                                                   (name,
                                                    "increased" if count >= 0
                                                    else "decreased",
