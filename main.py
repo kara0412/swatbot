@@ -1,15 +1,17 @@
 #!/usr/bin/env python
+
 import logging
 import re
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 from telegram import MessageEntity
 
-from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY
+from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY, SENTRY_DSN
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     should_rate_limit_per_person, should_rate_limit_for_anyone
-
+import sentry_sdk
+sentry_sdk.init(SENTRY_DSN)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
 
