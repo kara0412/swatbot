@@ -3,7 +3,7 @@ import uuid
 from main import mention_response
 from db_helpers import reset_dict
 from settings import MAX_INC, MAX_DEC, PENALTY
-from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS
+from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -69,11 +69,10 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         self.context = Context()
         reset_dict()
 
-    def assert_chat_called_with(self, text):
-        for call in self.mock_bot.called_with:
-            if call == text:
-                return True
-        raise AssertionError("\"%s\" is not in the calls %s" %(text, self.mock_bot.called_with))
+    def assert_chat_called_with(self, sent_texts):
+        for text in sent_texts:
+            if text not in self.mock_bot.called_with:
+                raise AssertionError("\"%s\" is not in the calls %s" % (text, self.mock_bot.called_with))
 
 
     def call_handler_with_message(self, text, entities=None, from_user=None):
@@ -84,25 +83,45 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         update = Update(uuid.uuid4(), message=m)
         mention_response(update, self.context)
 
+    def test_milestones(self):
+        import pdb; pdb.set_trace()
+
+        for key, value in MILESTONES.items():
+            reset_dict()
+            count = 0
+            num_messages_needed = key / MAX_INC + 1
+            for i in range(num_messages_needed):
+                self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
+                count += MAX_INC
+            self.assert_chat_called_with([value]) # assert milestone message sent
+            self.mock_bot.called_with = []
+            self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
+
+            # assert milestone message just sent once
+            self.assertEqual(self.mock_bot.called_with,
+                             [SWAT_UPDATE_STRING % (self.mention_text, "increased", count + MAX_INC)])
 
     def test_penalty_increase_limit(self):
         self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC+1))
-        self.assert_chat_called_with(PENALTY_SCOLDS["SWAT_INC"])
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
         self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "increased", MAX_INC))
+        expected_messages = [PENALTY_SCOLDS["SWAT_INC"],
+                             SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY),
+                             SWAT_UPDATE_STRING % (self.mention_text, "increased", MAX_INC)]
+        self.assert_chat_called_with(expected_messages)
 
     def test_penalty_decrease_limit(self):
         self.call_handler_with_message("@%s -%d" % (self.mention_text, MAX_DEC+1))
-        self.assert_chat_called_with(PENALTY_SCOLDS["SWAT_DEC"])
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
         self.call_handler_with_message("@%s -%d" % (self.mention_text, MAX_DEC))
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "decreased", -MAX_DEC))
+        expected_messages = [PENALTY_SCOLDS["SWAT_DEC"],
+                             SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY),
+                             SWAT_UPDATE_STRING % (self.mention_text, "decreased", -MAX_DEC)]
+        self.assert_chat_called_with(expected_messages)
 
     def test_penalty_decrease_own_swats(self):
         self.call_handler_with_message("@%s -5" % self.from_user_text, entities=[self.from_user_entity])
-        self.assert_chat_called_with(PENALTY_SCOLDS["OWN_SWAT"])
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY))
+        expected_messages = [PENALTY_SCOLDS["OWN_SWAT"],
+                             SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY)]
+        self.assert_chat_called_with(expected_messages)
 
     def test_no_mention_response(self):
         self.call_handler_with_message("No mention here!")
@@ -120,15 +139,16 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                                        user=other_mentioned_user)
         self.call_handler_with_message("@%s +4 @%s +2" % (self.mention_text, other_mention_text),
                                        entities=[self.mention_entity, other_mention_entity])
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "increased", 4))
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (other_mention_text, "increased", 2))
+        expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 4),
+                             SWAT_UPDATE_STRING % (other_mention_text, "increased", 2)]
+        self.assert_chat_called_with(expected_messages)
 
     def test_mention(self):
         self.call_handler_with_message("@%s +4" % self.mention_text)
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "increased", 4))
         self.call_handler_with_message("@%s -4" % self.mention_text)
-        self.assert_chat_called_with(SWAT_UPDATE_STRING % (self.mention_text, "decreased", 0))
-
+        expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 4),
+                             SWAT_UPDATE_STRING % (self.mention_text, "decreased", 0)]
+        self.assert_chat_called_with(expected_messages)
 
 # Both users have usernames
 class TestBothHaveUsernames(TestMentionHandlerBaseNoUsernames):

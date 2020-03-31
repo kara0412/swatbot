@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from settings import MAX_INC, MAX_DEC, PER_PERSON_TIME_LIMIT, \
     TIME_WINDOW, TIME_WINDOW_LIMIT_COUNT
+from collections import OrderedDict
 
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
 
@@ -27,3 +28,7 @@ PENALTY_SCOLDS = {
                              (TIME_WINDOW_LIMIT_COUNT, TIME_WINDOW)
 }
 
+messages = OrderedDict()
+messages[50] = "Over 50, ouch! I do not envy you right now."
+messages[100] = "Oh boy, over 100 swats! Looks like you have a big spanking coming..."
+MILESTONES = messages

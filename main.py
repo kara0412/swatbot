@@ -7,7 +7,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 from telegram import MessageEntity
 
 from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY, SENTRY_DSN
-from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS
+from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     should_rate_limit_per_person, should_rate_limit_for_anyone
 import sentry_sdk
@@ -55,6 +55,11 @@ def start(update, context):
 def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES)
 
+def crossed_milestone(old, new):
+    for key, value in MILESTONES.items():
+        if old < key and new >= key:
+            return value
+
 def mention_response(update, context):
 
     from_user = update.message.from_user
@@ -97,12 +102,17 @@ def mention_response(update, context):
                         return send_penalty(penalty_string)
 
                 # No penalty; update receiver swat count as usual
+                old_count = get_user_count_from_db(receiver_id)
                 update_user_count_in_db(from_user.id, receiver_id, username_present, count)
                 new_count = get_user_count_from_db(receiver_id)
                 context.bot.send_message(chat_id=update.effective_chat.id,
                                          text=SWAT_UPDATE_STRING %
                                               (name, "increased" if count >= 0
                                               else "decreased", new_count))
+                milestone_message = crossed_milestone(old_count, new_count)
+                if milestone_message:
+                    context.bot.send_message(chat_id=update.effective_chat.id,
+                                             text=milestone_message)
 
 def main():
     """Start the bot."""
