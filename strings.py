@@ -11,8 +11,8 @@ RULES = "Rules? For a bot? Well, this is a spanking bot after all. And you know 
         "\n3. You can only subtract %s swats at a time." \
         "\n4. You must wait %s minutes between sending swats to any particular person." \
         "\n5. You can only send %s distinct people swats in a %s minute window."\
-        "\n\n Each infraction will swiftly earn you 5 additional swats. " \
-        "If you need a refresher, just type /rules anytime to see this list." % \
+        "\n\nEach infraction will swiftly earn you 5 additional swats. If you " \
+        "need a refresher, just type /rules anytime to see this list." % \
         (MAX_INC, MAX_DEC, PER_PERSON_TIME_LIMIT, TIME_WINDOW_LIMIT_COUNT, TIME_WINDOW)
 
 PENALTY_SCOLDS = {
