@@ -1,8 +1,11 @@
 import unittest
 import uuid
+
+import psycopg2
+
+from db_helpers import get_conn
 from main import mention_response
-from db_helpers import reset_dict
-from settings import MAX_INC, MAX_DEC, PENALTY
+from settings import MAX_INC, MAX_DEC, PENALTY, DB_USERNAME, DB_PASSWORD, TIME_WINDOW_LIMIT_COUNT
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
@@ -40,6 +43,17 @@ def get_Jill_username():
                                      user=from_user)
     return (from_user_text, from_user, from_user_entity)
 
+
+def setup_database():
+    create_db_sql = """CREATE DATABASE test_swatbot"""
+    server_conn = psycopg2.connect("user=%s password=%s" % (DB_USERNAME, DB_PASSWORD))
+    server_conn.set_isolation_level(0)
+    server_cur = server_conn.cursor()
+    server_cur.execute(create_db_sql)
+    server_conn.commit()
+    server_cur.close()
+
+
 class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
 
     @classmethod
@@ -47,6 +61,18 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         cls.chat = Chat(1, "group")
         cls.mention_text, cls.mentioned_user, cls.mention_entity = get_Jen_no_username()
         cls.from_user_text, cls.from_user, cls.from_user_entity = get_Jill_no_username()
+
+        setup_database()
+
+    @classmethod
+    def tearDownClass(cls):
+        destroy_db_sql = """DROP DATABASE IF EXISTS test_swatbot;"""
+        conn = psycopg2.connect("user=%s password=%s" % (DB_USERNAME, DB_PASSWORD))
+        conn.set_isolation_level(0)
+        cur = conn.cursor()
+        cur.execute(destroy_db_sql)
+        conn.commit()
+        cur.close()
 
     def setUp(self):
         class MockBot():
@@ -67,7 +93,35 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
 
         self.mock_bot = mock_bot
         self.context = Context()
-        reset_dict()
+
+        create_users_sql = """CREATE TABLE users(
+                                        user_id VARCHAR (50) UNIQUE PRIMARY KEY NOT NULL,
+                                        username_present bool NOT NULL,
+                                        received_swats_count INT NOT NULL
+                                   );"""
+        create_history_sql = """CREATE TABLE history(
+                                            giver VARCHAR (50) NOT NULL,
+                                            receiver VARCHAR (50) NOT NULL,
+                                            count integer NOT NULL,
+                                            timestamp integer NOT NULL
+                                     );"""
+        db_conn = get_conn()
+        db_cur = db_conn.cursor()
+        db_cur.execute(create_users_sql)
+        db_cur.execute(create_history_sql)
+        db_conn.commit()
+        db_cur.close()
+
+    def tearDown(self):
+        drop_users_sql = """DROP TABLE users;"""
+        drop_history_sql = """DROP TABLE history;"""
+        db_conn = get_conn()
+        db_cur = db_conn.cursor()
+        db_cur.execute(drop_users_sql)
+        db_cur.execute(drop_history_sql)
+        db_conn.commit()
+        db_cur.close()
+
 
     def assert_chat_called_with(self, sent_texts):
         for text in sent_texts:
@@ -75,31 +129,33 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                 raise AssertionError("\"%s\" is not in the calls %s" % (text, self.mock_bot.called_with))
 
 
-    def call_handler_with_message(self, text, entities=None, from_user=None):
+    def call_handler_with_message(self, text, entities=None, from_user=None,
+                                  per_person_rate_limit=None, general_rate_limit=None):
         if not entities:
             entities = [self.mention_entity]
         m =  Message(uuid.uuid4(), from_user or self.from_user, datetime.now(), self.chat,
                      text=text, entities=entities)
         update = Update(uuid.uuid4(), message=m)
-        mention_response(update, self.context)
+        mention_response(update, self.context, per_person_rate_limit, general_rate_limit)
 
     def test_milestones(self):
-        import pdb; pdb.set_trace()
-
+        count = 0
+        messages_sent = 0
         for key, value in MILESTONES.items():
-            reset_dict()
-            count = 0
-            num_messages_needed = key / MAX_INC + 1
+            num_messages_needed = key / MAX_INC + 1 - messages_sent
             for i in range(num_messages_needed):
                 self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
+                messages_sent += 1
                 count += MAX_INC
             self.assert_chat_called_with([value]) # assert milestone message sent
             self.mock_bot.called_with = []
             self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC))
-
+            messages_sent += 1
+            count += MAX_INC
             # assert milestone message just sent once
-            self.assertEqual(self.mock_bot.called_with,
-                             [SWAT_UPDATE_STRING % (self.mention_text, "increased", count + MAX_INC)])
+            self.assertEqual([SWAT_UPDATE_STRING % (self.mention_text, "increased", count)],
+                             self.mock_bot.called_with)
+
 
     def test_penalty_increase_limit(self):
         self.call_handler_with_message("@%s +%d" % (self.mention_text, MAX_INC+1))
@@ -107,6 +163,22 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         expected_messages = [PENALTY_SCOLDS["SWAT_INC"],
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY),
                              SWAT_UPDATE_STRING % (self.mention_text, "increased", MAX_INC)]
+        self.assert_chat_called_with(expected_messages)
+
+    def test_penalty_per_person_limit(self):
+        self.call_handler_with_message("@%s +%d" % (self.mention_text, 2), per_person_rate_limit=1)
+        self.call_handler_with_message("@%s +%d" % (self.mention_text, 2), per_person_rate_limit=1)
+        expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 2),
+                             PENALTY_SCOLDS["LIMIT_PER_PERSON"] % self.mention_text,
+                             SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY)]
+        self.assert_chat_called_with(expected_messages)
+
+    def test_penalty_cross_receiver_limit(self):
+        for i in range(0, TIME_WINDOW_LIMIT_COUNT + 1):
+            self.call_handler_with_message("@%s +%d" % (self.mention_text, 2), general_rate_limit=1)
+        expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 2),
+                             PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"],
+                             SWAT_UPDATE_STRING % (self.from_user_text, "increased", PENALTY)]
         self.assert_chat_called_with(expected_messages)
 
     def test_penalty_decrease_limit(self):
@@ -155,6 +227,7 @@ class TestBothHaveUsernames(TestMentionHandlerBaseNoUsernames):
 
     @classmethod
     def setUpClass(cls):
+        setup_database()
         cls.chat = Chat(1, "group")
         cls.mention_text, cls.mentioned_user, cls.mention_entity = get_Jen_username()
         cls.from_user_text, cls.from_user, cls.from_user_entity = get_Jill_username()
@@ -165,15 +238,18 @@ class TestOnlyMentionedHasUsername(TestMentionHandlerBaseNoUsernames):
 
     @classmethod
     def setUpClass(cls):
+        setup_database()
         cls.chat = Chat(1, "group")
         cls.mention_text, cls.mentioned_user, cls.mention_entity = get_Jen_username()
         cls.from_user_text, cls.from_user, cls.from_user_entity = get_Jill_no_username()
+
 
 # Only the from user has a username
 class TestOnlyFromHasUsername(TestMentionHandlerBaseNoUsernames):
 
     @classmethod
     def setUpClass(cls):
+        setup_database()
         cls.chat = Chat(1, "group")
         cls.mention_text, cls.mentioned_user, cls.mention_entity = get_Jen_no_username()
         cls.from_user_text, cls.from_user, cls.from_user_entity = get_Jill_username()

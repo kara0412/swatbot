@@ -3,38 +3,31 @@ from collections import defaultdict
 
 import psycopg2
 
-from settings import ENV, DATABASE_URL, PER_PERSON_TIME_LIMIT, TIME_WINDOW, TIME_WINDOW_LIMIT_COUNT
+from settings import DATABASE_URL, PER_PERSON_TIME_LIMIT, TIME_WINDOW, TIME_WINDOW_LIMIT_COUNT
 
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 in_memory_swat_count_dict = defaultdict(int)
 
-def _env_is_test():
-    return ENV == 'TEST'
 
-def reset_dict():
-    in_memory_swat_count_dict.clear()
+def get_conn():
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def update_history_in_db(giver, receiver, count):
-    if _env_is_test():
-        return
     sql = """INSERT INTO history (giver, receiver, count, timestamp)
              VALUES (%s, %s, %s, %s)"""
+    conn = get_conn()
     cur = conn.cursor()
     cur.execute(sql, (str(giver), str(receiver), count, time.time()))
     conn.commit()
     cur.close()
 
-
 def update_user_count_in_db(giver_id, receiver_id, username_present, count):
-    if _env_is_test():
-        in_memory_swat_count_dict[receiver_id] += count
-        return
     sql = """INSERT INTO users (user_id, username_present, received_swats_count)
              VALUES (%s, %s, %s)
              ON CONFLICT (user_id) 
              DO UPDATE 
                 SET received_swats_count = users.received_swats_count + %s
                 RETURNING received_swats_count;"""
+    conn = get_conn()
     cur = conn.cursor()
     cur.execute(sql, (str(receiver_id), username_present, count, count))
     conn.commit()
@@ -42,11 +35,10 @@ def update_user_count_in_db(giver_id, receiver_id, username_present, count):
     update_history_in_db(giver_id, receiver_id, count)
 
 def get_user_count_from_db(user_id):
-    if _env_is_test():
-        return in_memory_swat_count_dict[user_id]
     sql = """SELECT users.received_swats_count 
              FROM users
              WHERE users.user_id=%s"""
+    conn = get_conn()
     cur = conn.cursor()
     cur.execute(sql, (str(user_id),))
     result = None
@@ -56,11 +48,13 @@ def get_user_count_from_db(user_id):
     cur.close()
     return result
 
-def should_rate_limit_per_person(giver, receiver):
-    if _env_is_test():
+def should_rate_limit_per_person(giver, receiver, limit=None):
+    rate_limit = limit if limit is not None else PER_PERSON_TIME_LIMIT
+    if rate_limit == 0:
         return False
     sql = """SELECT MAX(timestamp) FROM history
              WHERE giver = %s AND receiver = %s;"""
+    conn = get_conn()
     cur = conn.cursor()
     cur.execute(sql, (str(giver), str(receiver)))
     result = None
@@ -70,17 +64,21 @@ def should_rate_limit_per_person(giver, receiver):
     cur.close()
     if not result:
         return False
-    return time.time() - result < PER_PERSON_TIME_LIMIT*60
+    return time.time() - result < rate_limit*60
 
-def should_rate_limit_for_anyone(giver):
-    if _env_is_test():
+def should_rate_limit_for_anyone(giver, general_rate_limit=None):
+    rate_limit = general_rate_limit if general_rate_limit is not None else TIME_WINDOW
+    if rate_limit == 0:
         return False
     sql = """SELECT timestamp FROM history
              WHERE giver = %s
              ORDER BY timestamp DESC;"""
+    conn = get_conn()
     cur = conn.cursor()
     cur.execute(sql, (str(giver),))
     if cur.rowcount < TIME_WINDOW_LIMIT_COUNT:
         return False
     limit_result = cur.fetchmany(TIME_WINDOW_LIMIT_COUNT)[TIME_WINDOW_LIMIT_COUNT - 1][0]
-    return time.time() - limit_result < TIME_WINDOW*60
+    conn.commit()
+    cur.close()
+    return time.time() - limit_result < rate_limit*60

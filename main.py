@@ -60,8 +60,7 @@ def crossed_milestone(old, new):
         if old < key and new >= key:
             return value
 
-def mention_response(update, context):
-
+def mention_response(update, context, per_person_rate_limit=None, general_rate_limit=None):
     from_user = update.message.from_user
     def send_penalty(penalty_message):
         from_user_id, name = from_user.id, from_user.first_name
@@ -91,8 +90,8 @@ def mention_response(update, context):
                     (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                              or (username_present and from_user.username and from_user.username.lower() == receiver_id
                                  and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
-                    (lambda: should_rate_limit_per_person(from_user.id, receiver_id), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
-                    (lambda: should_rate_limit_for_anyone(from_user.id), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
+                    (lambda: should_rate_limit_per_person(from_user.id, receiver_id, per_person_rate_limit), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
+                    (lambda: should_rate_limit_for_anyone(from_user.id, general_rate_limit), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
                     (lambda: count > MAX_INC, PENALTY_SCOLDS["SWAT_INC"]),
                     (lambda: count < MAX_DEC*(-1), PENALTY_SCOLDS["SWAT_DEC"])
                 ]
