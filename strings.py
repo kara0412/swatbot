@@ -28,6 +28,7 @@ PENALTY_SCOLDS = {
                              (TIME_WINDOW_LIMIT_COUNT, TIME_WINDOW)
 }
 
+ERROR_MSG = "Oops! Something went wrong... maybe I deserve some swats." # catch-all if swatbot starts malfunctioning
 messages = OrderedDict()
 messages[50] = "Over 50, ouch! I do not envy you right now."
 messages[100] = "Oh boy, over 100 swats! Looks like you have a big spanking coming..."

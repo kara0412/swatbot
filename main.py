@@ -7,7 +7,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 from telegram import MessageEntity
 
 from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY, SENTRY_DSN
-from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES
+from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
+    ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     should_rate_limit_per_person, should_rate_limit_for_anyone
 import sentry_sdk
@@ -61,57 +62,62 @@ def crossed_milestone(old, new):
             return value
 
 def mention_response(update, context, per_person_rate_limit=None, general_rate_limit=None):
-    from_user = update.message.from_user
-    def send_penalty(penalty_message):
-        from_user_id, name = from_user.id, from_user.first_name
-        if from_user.username: # to be consistent with the mention text issue :(
-            from_user_id, name = from_user.username.lower(), from_user.username
-        update_user_count_in_db(context.bot.username, from_user_id,
-                                from_user.username != None, PENALTY)
-        new_count = get_user_count_from_db(from_user_id)
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=penalty_message)
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=SWAT_UPDATE_STRING % (name, "increased", new_count))
+    try:
+        from_user = update.message.from_user
+        def send_penalty(penalty_message):
+            from_user_id, name = from_user.id, from_user.first_name
+            if from_user.username: # to be consistent with the mention text issue :(
+                from_user_id, name = from_user.username.lower(), from_user.username
+            update_user_count_in_db(context.bot.username, from_user_id,
+                                    from_user.username != None, PENALTY)
+            new_count = get_user_count_from_db(from_user_id)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=penalty_message)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=SWAT_UPDATE_STRING % (name, "increased", new_count))
 
-    entities = message_contains_mentions(update.message)
-    if entities != False:
-        text = update.message.text
-        for entity in entities:
-            count = get_count_after_mention(entity, text)
-            if isinstance(count, int):
-                username_present = entity.type != MessageEntity.TEXT_MENTION
-                mention_text = entities[entity][1:]
-                receiver_id = entity.user.id if not username_present else mention_text.lower()
-                name = entity.user.first_name if not username_present else mention_text
+        entities = message_contains_mentions(update.message)
+        if entities != False:
+            text = update.message.text
+            for entity in entities:
+                count = get_count_after_mention(entity, text)
+                if isinstance(count, int):
+                    username_present = entity.type != MessageEntity.TEXT_MENTION
+                    mention_text = entities[entity][1:]
+                    receiver_id = entity.user.id if not username_present else mention_text.lower()
+                    name = entity.user.first_name if not username_present else mention_text
 
-                # Did the sender violate any rules?
-                penalty_conditions = [
-                    (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
-                             or (username_present and from_user.username and from_user.username.lower() == receiver_id
-                                 and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
-                    (lambda: should_rate_limit_per_person(from_user.id, receiver_id, per_person_rate_limit), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
-                    (lambda: should_rate_limit_for_anyone(from_user.id, general_rate_limit), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
-                    (lambda: count > MAX_INC, PENALTY_SCOLDS["SWAT_INC"]),
-                    (lambda: count < MAX_DEC*(-1), PENALTY_SCOLDS["SWAT_DEC"])
-                ]
+                    # Did the sender violate any rules?
+                    penalty_conditions = [
+                        (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
+                                 or (username_present and from_user.username and from_user.username.lower() == receiver_id
+                                     and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
+                        (lambda: should_rate_limit_per_person(from_user.id, receiver_id, per_person_rate_limit), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
+                        (lambda: should_rate_limit_for_anyone(from_user.id, general_rate_limit), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
+                        (lambda: count > MAX_INC, PENALTY_SCOLDS["SWAT_INC"]),
+                        (lambda: count < MAX_DEC*(-1), PENALTY_SCOLDS["SWAT_DEC"])
+                    ]
 
-                for condition, penalty_string in penalty_conditions:
-                    if condition():
-                        return send_penalty(penalty_string)
+                    for condition, penalty_string in penalty_conditions:
+                        if condition():
+                            return send_penalty(penalty_string)
 
-                # No penalty; update receiver swat count as usual
-                old_count = get_user_count_from_db(receiver_id)
-                update_user_count_in_db(from_user.id, receiver_id, username_present, count)
-                new_count = get_user_count_from_db(receiver_id)
-                context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text=SWAT_UPDATE_STRING %
-                                              (name, "increased" if count >= 0
-                                              else "decreased", new_count))
-                milestone_message = crossed_milestone(old_count, new_count)
-                if milestone_message:
+                    # No penalty; update receiver swat count as usual
+                    old_count = get_user_count_from_db(receiver_id)
+                    update_user_count_in_db(from_user.id, receiver_id, username_present, count)
+                    new_count = get_user_count_from_db(receiver_id)
                     context.bot.send_message(chat_id=update.effective_chat.id,
-                                             text=milestone_message)
+                                             text=SWAT_UPDATE_STRING %
+                                                  (name, "increased" if count >= 0
+                                                  else "decreased", new_count))
+                    milestone_message = crossed_milestone(old_count, new_count)
+                    if milestone_message:
+                        context.bot.send_message(chat_id=update.effective_chat.id,
+                                                 text=milestone_message)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=ERROR_MSG)
+        raise
 
 def main():
     """Start the bot."""
