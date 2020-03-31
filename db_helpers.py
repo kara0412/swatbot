@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import psycopg2
 
-from settings import ENV, DATABASE_URL, PER_PERSON_TIME_LIMIT
+from settings import ENV, DATABASE_URL, PER_PERSON_TIME_LIMIT, TIME_WINDOW, TIME_WINDOW_LIMIT_COUNT
 
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 in_memory_swat_count_dict = defaultdict(int)
@@ -56,7 +56,7 @@ def get_user_count_from_db(user_id):
     cur.close()
     return result
 
-def should_rate_limit(giver, receiver):
+def should_rate_limit_per_person(giver, receiver):
     if _env_is_test():
         return False
     sql = """SELECT MAX(timestamp) FROM history
@@ -71,3 +71,16 @@ def should_rate_limit(giver, receiver):
     if not result:
         return False
     return time.time() - result < PER_PERSON_TIME_LIMIT*60
+
+def should_rate_limit_for_anyone(giver):
+    if _env_is_test():
+        return False
+    sql = """SELECT timestamp FROM history
+             WHERE giver = %s
+             ORDER BY timestamp DESC;"""
+    cur = conn.cursor()
+    cur.execute(sql, (str(giver),))
+    if cur.rowcount < TIME_WINDOW_LIMIT_COUNT:
+        return False
+    limit_result = cur.fetchmany(TIME_WINDOW_LIMIT_COUNT)[TIME_WINDOW_LIMIT_COUNT - 1][0]
+    return time.time() - limit_result < TIME_WINDOW*60

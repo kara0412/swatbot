@@ -7,7 +7,8 @@ from telegram import MessageEntity
 
 from settings import WEBHOOK_URL, TOKEN, PORT, MAX_INC, MAX_DEC, PENALTY
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS
-from db_helpers import update_user_count_in_db, get_user_count_from_db, should_rate_limit
+from db_helpers import update_user_count_in_db, get_user_count_from_db, \
+    should_rate_limit_per_person, should_rate_limit_for_anyone
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -83,7 +84,8 @@ def mention_response(update, context):
                     (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                              or (username_present and from_user.username and from_user.username.lower() == receiver_id
                                  and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
-                    (lambda: should_rate_limit(from_user.id, receiver_id), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
+                    (lambda: should_rate_limit_per_person(from_user.id, receiver_id), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
+                    (lambda: should_rate_limit_for_anyone(from_user.id), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
                     (lambda: count > MAX_INC, PENALTY_SCOLDS["SWAT_INC"]),
                     (lambda: count < MAX_DEC*(-1), PENALTY_SCOLDS["SWAT_DEC"])
                 ]
