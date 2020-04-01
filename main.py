@@ -54,7 +54,8 @@ def start(update, context):
                              text="Hello! I'm SwatBot.")
 
 def rules(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=RULES)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
+        (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"]))
 
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
@@ -66,10 +67,10 @@ def look_for_penalties(username_present, receiver_id, name, count, from_user, bo
         (lambda: receiver_id == bot_username, PENALTY_SCOLDS["SWATTING_BOT"]),
         (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                   or (username_present and from_user.username and from_user.username.lower() == receiver_id and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
-        (lambda: should_rate_limit_per_person(from_user.id, receiver_id), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % name),
-        (lambda: should_rate_limit_for_anyone(from_user.id), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"]),
-        (lambda: count > env_vars["MAX_INC"], PENALTY_SCOLDS["SWAT_INC"]),
-        (lambda: count < env_vars["MAX_DEC"] * (-1), PENALTY_SCOLDS["SWAT_DEC"])
+        (lambda: should_rate_limit_per_person(from_user.id, receiver_id), PENALTY_SCOLDS["LIMIT_PER_PERSON"] % (env_vars["PER_PERSON_TIME_LIMIT"], name)),
+        (lambda: should_rate_limit_for_anyone(from_user.id), PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"] % (env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"])),
+        (lambda: count > env_vars["MAX_INC"], PENALTY_SCOLDS["SWAT_INC"] % env_vars["MAX_INC"],),
+        (lambda: count < env_vars["MAX_DEC"] * (-1), PENALTY_SCOLDS["SWAT_DEC"] % env_vars["MAX_DEC"])
     ]
 
     for condition, penalty_string in penalty_conditions:

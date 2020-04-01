@@ -169,7 +169,7 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
     def test_penalty_increase_limit(self):
         self.call_handler_with_message("@%s +%d" % (self.mention_text, env_vars["MAX_INC"]+1))
         self.call_handler_with_message("@%s +%d" % (self.mention_text, env_vars["MAX_INC"]))
-        expected_messages = [PENALTY_SCOLDS["SWAT_INC"],
+        expected_messages = [PENALTY_SCOLDS["SWAT_INC"] % env_vars["MAX_INC"],
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", env_vars["PENALTY"]),
                              SWAT_UPDATE_STRING % (self.mention_text, "increased", env_vars["MAX_INC"])]
         self.assert_chat_called_with(expected_messages)
@@ -179,7 +179,7 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))
         self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))
         expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 2),
-                             PENALTY_SCOLDS["LIMIT_PER_PERSON"] % self.mention_text,
+                             PENALTY_SCOLDS["LIMIT_PER_PERSON"] % (env_vars["PER_PERSON_TIME_LIMIT"], self.mention_text),
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", env_vars["PENALTY"])]
         self.assert_chat_called_with(expected_messages)
 
@@ -189,14 +189,14 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         for i in range(0, env_vars["TIME_WINDOW_LIMIT_COUNT"] + 1):
             self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))
         expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 2),
-                             PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"],
+                             PENALTY_SCOLDS["LIMIT_PER_TIME_WINDOW"] % (env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"]),
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", env_vars["PENALTY"])]
         self.assert_chat_called_with(expected_messages)
 
     def test_penalty_decrease_limit(self):
         self.call_handler_with_message("@%s -%d" % (self.mention_text, env_vars["MAX_DEC"]+1))
         self.call_handler_with_message("@%s -%d" % (self.mention_text, env_vars["MAX_DEC"]))
-        expected_messages = [PENALTY_SCOLDS["SWAT_DEC"],
+        expected_messages = [PENALTY_SCOLDS["SWAT_DEC"] % env_vars["MAX_DEC"],
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", env_vars["PENALTY"]),
                              SWAT_UPDATE_STRING % (self.mention_text, "decreased", -env_vars["MAX_DEC"])]
         self.assert_chat_called_with(expected_messages)
