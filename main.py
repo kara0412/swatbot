@@ -61,6 +61,12 @@ def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
         if old < key and new >= key:
             return value
+def check_for_milestones(old, new, context, update):
+    if old is not None:
+        milestone_message = crossed_milestone(old, new)
+        if milestone_message:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=milestone_message)
 
 def look_for_penalties(username_present, receiver_id, name, count, from_user, bot_username):
     penalty_conditions = [
@@ -81,6 +87,7 @@ def send_penalty(penalty_message, from_user, context, update):
         from_user_id, name = from_user.id, from_user.first_name
         if from_user.username: # to be consistent with the mention text issue :(
             from_user_id, name = from_user.username.lower(), from_user.username
+        old_count = get_user_count_from_db(from_user_id)
         update_user_count_in_db(context.bot.username, from_user_id,
                                 from_user.username != None, env_vars["PENALTY"])
         new_count = get_user_count_from_db(from_user_id)
@@ -88,6 +95,8 @@ def send_penalty(penalty_message, from_user, context, update):
                                  text=penalty_message)
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=SWAT_UPDATE_STRING % (name, "increased", new_count))
+        check_for_milestones(old_count, new_count, context, update)
+
 
 def get_mention_properties(entity, entities):
     username_present = entity.type != MessageEntity.TEXT_MENTION
@@ -95,6 +104,7 @@ def get_mention_properties(entity, entities):
     receiver_id = entity.user.id if not username_present else mention_text.lower()
     name = entity.user.first_name if not username_present else mention_text
     return (username_present, mention_text, receiver_id, name)
+
 
 def mention_response(update, context):
     try:
@@ -123,11 +133,7 @@ def mention_response(update, context):
                                              text=SWAT_UPDATE_STRING %
                                                   (name, "increased" if count >= 0
                                                   else "decreased", new_count))
-                    if old_count is not None:
-                        milestone_message = crossed_milestone(old_count, new_count)
-                        if milestone_message:
-                            context.bot.send_message(chat_id=update.effective_chat.id,
-                                                    text=milestone_message)
+                    check_for_milestones(old_count, new_count, context, update)
     except:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=ERROR_MSG)
