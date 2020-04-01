@@ -122,10 +122,11 @@ def mention_response(update, context):
                                              text=SWAT_UPDATE_STRING %
                                                   (name, "increased" if count >= 0
                                                   else "decreased", new_count))
-                    milestone_message = crossed_milestone(old_count, new_count)
-                    if milestone_message:
-                        context.bot.send_message(chat_id=update.effective_chat.id,
-                                                 text=milestone_message)
+                    if old_count is not None:
+                        milestone_message = crossed_milestone(old_count, new_count)
+                        if milestone_message:
+                            context.bot.send_message(chat_id=update.effective_chat.id,
+                                                    text=milestone_message)
     except:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=ERROR_MSG)
