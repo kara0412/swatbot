@@ -9,7 +9,7 @@ RULES = "Rules? For a bot? Well, this is a spanking bot after all. And you know 
         "\n2. You can only add %s swats at a time." \
         "\n3. You can only subtract %s swats at a time." \
         "\n4. You must wait %s minutes between sending swats to any particular person." \
-        "\n5. You can only add or subtract swats %s times in a %s minute window."\
+        "\n5. You can only add or subtract swats for %s people in a %s minute window."\
         "\n\nEach infraction will swiftly earn you 5 additional swats. These rules " \
         "are neither comprehensive nor invariable. More rules could be added at any " \
         "point. If you need a refresher, just type /rules anytime to see this list."
@@ -22,7 +22,7 @@ PENALTY_SCOLDS = {
     "LIMIT_PER_PERSON": "Whoa there... remember, you have to wait %s minutes before you can "
                         "add or subtract swats for %s again!",
     "LIMIT_PER_TIME_WINDOW": "Let's not get carried away... you can only add or "
-                             "subtract swats %s times within a %s minute window."
+                             "subtract swats for %s people within a %s minute window."
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I'm now broken." # catch-all if swatbot starts malfunctioning
