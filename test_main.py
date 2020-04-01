@@ -174,6 +174,16 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                              SWAT_UPDATE_STRING % (self.mention_text, "increased", env_vars["MAX_INC"])]
         self.assert_chat_called_with(expected_messages)
 
+    def test_penalty_per_person_limit_string_interpolation(self):
+        env_vars["PER_PERSON_TIME_LIMIT"] = 1
+        self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))
+        self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))
+        expected_messages = ["%s's swat count has now increased to 2." % self.mention_text,
+                             "Whoa there... remember, you have to wait 1 minutes before you "
+                             "can add or subtract swats for %s again!" % self.mention_text,
+                             "%s's swat count has now increased to 5." % self.from_user_text]
+        self.assert_chat_called_with(expected_messages)
+
     def test_penalty_per_person_limit(self):
         env_vars["PER_PERSON_TIME_LIMIT"] = 1
         self.call_handler_with_message("@%s +%d" % (self.mention_text, 2))

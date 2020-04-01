@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 load_dotenv()
-from settings import env_vars
 from collections import OrderedDict
 
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
