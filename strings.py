@@ -4,7 +4,12 @@ from collections import OrderedDict
 
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
 
-RULES = "Rules? For a bot? Well, this is a spanking bot after all. And you know what that means if you disobey!" \
+RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll keep track of " \
+        "how many they have coming. For example, you can type @<mention> +5 to give someone" \
+        "5 swats if they misbehave. And if they do something nice, you can subtract swats by " \
+        "typing @<mention> -5! " \
+        "\n\nBe careful, though... there are rules. This is a spanking " \
+        "bot after all. And you know what that means if you disobey!" \
         "\n\n1. You can't subtract your own swats." \
         "\n2. You can only add %s swats at a time." \
         "\n3. You can only subtract %s swats at a time." \
@@ -12,7 +17,10 @@ RULES = "Rules? For a bot? Well, this is a spanking bot after all. And you know 
         "\n5. You can only add or subtract swats for %s people in a %s minute window."\
         "\n\nEach infraction will swiftly earn you 5 additional swats. These rules " \
         "are neither comprehensive nor invariable. More rules could be added at any " \
-        "point. If you need a refresher, just type /rules anytime to see this list."
+        "point. If you need a refresher, just type /rules anytime to see this list." \
+        "\n\nI can be added to as many groups as you want, and I'll keep the numbers " \
+        "consistent across them all. If you're curious to see how I was created, " \
+        "visit https://github.com/kara0412/swatbot."
 
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot
