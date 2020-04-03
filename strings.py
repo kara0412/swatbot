@@ -5,7 +5,7 @@ from collections import OrderedDict
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
 
 RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll keep track of " \
-        "how many they have coming. For example, you can type @<mention> +5 to give someone" \
+        "how many they have coming. For example, you can type @<mention> +5 to give someone " \
         "5 swats if they misbehave. And if they do something nice, you can subtract swats by " \
         "typing @<mention> -5! " \
         "\n\nBe careful, though... there are rules. This is a spanking " \

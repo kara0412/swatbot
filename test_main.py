@@ -43,6 +43,9 @@ def get_Jill_username():
     return (from_user_text, from_user, from_user_entity)
 
 
+def get_emoji_user():
+    emoji_user_text = unicode("Emoji 💩")
+
 def setup_database():
     create_db_sql = """CREATE DATABASE test_swatbot"""
     server_conn = psycopg2.connect("user=%s password=%s" % (env_vars["DB_USERNAME"], env_vars["DB_PASSWORD"]))
@@ -236,6 +239,7 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         expected_messages = [SWAT_UPDATE_STRING % (self.mention_text, "increased", 4),
                              SWAT_UPDATE_STRING % (other_mention_text, "increased", 2)]
         self.assert_chat_called_with(expected_messages)
+    def test_mention_with_emoji(self):
 
     def test_mention(self):
         self.call_handler_with_message("@%s +4" % self.mention_text)
