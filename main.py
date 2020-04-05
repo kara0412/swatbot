@@ -8,7 +8,7 @@ from telegram import MessageEntity
 
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG
+    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     should_rate_limit_per_person, should_rate_limit_for_anyone
 import sentry_sdk
@@ -20,6 +20,7 @@ updater = Updater(token=env_vars["TOKEN"], use_context=True)
 dispatcher = updater.dispatcher
 
 swat_regex = re.compile('^[\s]+[+-][0-9]+(?:\s|$)')
+
 
 def message_contains_mentions(message):
     """ Returns a list of MessageEntity mentions/text_mentions if they
@@ -55,7 +56,32 @@ def start(update, context):
 
 def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
-        (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"]))
+        (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
+         env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"],
+         env_vars["PENALTY"]))
+
+def my_swats(update, context):
+    from_user = update.message.from_user
+    id = from_user.username or from_user.id
+    count = get_user_count_from_db(str(id).lower())
+    if count is None:
+        count = 0
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=MY_SWATS % (from_user.first_name, count))
+
+def swat_count(update, context):
+    mentions_dict = message_contains_mentions(update.message)
+    if mentions_dict != {}:
+        for mention in mentions_dict:
+            _, _, id, name = get_mention_properties(mention, mentions_dict)
+            count = get_user_count_from_db(id)
+            if count == None:
+                count = 0
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=SWAT_COUNT % (name, count))
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=SWAT_COUNT_NO_MENTION)
 
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
@@ -110,7 +136,7 @@ def mention_response(update, context):
     try:
         from_user = update.message.from_user
         entities = message_contains_mentions(update.message)
-        if entities != False:
+        if entities != {}:
             text = update.message.text
             for entity in entities:
                 count = get_count_after_mention(entity, text)
@@ -143,8 +169,11 @@ def main():
     """Start the bot."""
     start_handler = CommandHandler('start', start)
     rules_handler = CommandHandler('rules', rules)
+    my_swats_handler = CommandHandler('my_swats', my_swats)
+    swat_count_handler = CommandHandler('swat_count', swat_count)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
-    add_handlers_to_dispatcher([start_handler, rules_handler, mention_handler])
+    add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
+                                swat_count_handler, mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
