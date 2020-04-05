@@ -3,7 +3,9 @@ load_dotenv()
 from collections import OrderedDict
 
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
-
+MY_SWATS = "%s, your swat count is %d."
+SWAT_COUNT_NO_MENTION = "You need to mention a user, like: /swat_count @Joe"
+SWAT_COUNT = "%s's swat count is %d."
 RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll keep track of " \
         "how many they have coming. For example, you can type @<mention> +5 to give someone " \
         "5 swats if they misbehave. And if they do something nice, you can subtract swats by " \
@@ -15,7 +17,7 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "\n3. You can only subtract %s swats at a time." \
         "\n4. You must wait %s minutes between sending swats to any particular person." \
         "\n5. You can only add or subtract swats for %s people in a %s minute window."\
-        "\n\nEach infraction will swiftly earn you 5 additional swats. These rules " \
+        "\n\nEach infraction will swiftly earn you %s additional swats. These rules " \
         "are neither comprehensive nor invariable. More rules could be added at any " \
         "point. If you need a refresher, just type /rules anytime to see this list." \
         "\n\nI can be added to as many groups as you want, and I'll keep the numbers " \

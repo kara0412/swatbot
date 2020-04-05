@@ -3,9 +3,10 @@ import uuid
 
 import psycopg2
 from db_helpers import get_conn
-from main import mention_response
+from main import mention_response, my_swats, swat_count, rules
 from settings import env_vars
-from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES
+from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, MY_SWATS, \
+    SWAT_COUNT, RULES
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -137,6 +138,64 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                      text=text, entities=entities)
         update = Update(uuid.uuid4(), message=m)
         mention_response(update, self.context)
+
+    def call_my_swats(self):
+        m = Message(uuid.uuid4(), self.mentioned_user, datetime.now(), self.chat,
+                    text='/my_swats')
+        update = Update(uuid.uuid4(), message=m)
+        my_swats(update, self.context)
+
+    def call_rules(self):
+        m = Message(uuid.uuid4(), self.from_user, datetime.now(), self.chat,
+                    text='/rules')
+        update = Update(uuid.uuid4(), message=m)
+        rules(update, self.context)
+
+    def call_swat_count(self, users):
+        command = '/swat_count '
+        mention_entities = []
+        for user in users:
+            if user.username is not None:
+                id = user.username
+                mention = MessageEntity(MessageEntity.MENTION, len(command),
+                                        len(id) + 1, user=user)
+            else:
+                id = user.first_name
+                mention = MessageEntity(MessageEntity.TEXT_MENTION, len(command),
+                                        len(id) + 1, user=user)
+            command = command + '@' + id + ' '
+            mention_entities.append(mention)
+
+        m = Message(uuid.uuid4(), self.mentioned_user, datetime.now(),
+                    self.chat, text=command, entities=mention_entities)
+        update = Update(uuid.uuid4(), message=m)
+        swat_count(update, self.context)
+
+    def test_my_swats(self):
+        self.call_handler_with_message('@%s +%d' % (self.mention_text, env_vars["MAX_INC"]))
+        self.call_handler_with_message('@%s -%d' % (self.mention_text, 1))
+        self.call_my_swats()
+        expected_message = [MY_SWATS % (self.mentioned_user.first_name, env_vars["MAX_INC"] - 1)]
+        self.assert_chat_called_with(expected_message)
+
+    def test_swat_count(self):
+        self.call_handler_with_message('@%s +%d' % (self.mention_text, 1))
+        self.call_swat_count([self.mentioned_user])
+        expected_messages = [SWAT_COUNT % (self.mention_text, 1)]
+        self.assert_chat_called_with(expected_messages)
+        self.call_handler_with_message('@%s +%d' % (self.from_user_text, 2),
+                                       entities=[self.from_user_entity])
+        self.call_swat_count([self.mentioned_user, self.from_user])
+        expected_messages_2 = [SWAT_COUNT % (self.mention_text, 1),
+                               SWAT_COUNT % (self.from_user_text, 2)]
+        self.assert_chat_called_with(expected_messages_2)
+
+    def test_rules(self):
+        self.call_rules()
+        expected_message = RULES % (env_vars["MAX_INC"], env_vars["MAX_DEC"],
+                                    env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"],
+                                    env_vars["TIME_WINDOW"], env_vars["PENALTY"])
+        self.assert_chat_called_with([expected_message])
 
     def test_milestones(self):
         count = 0
