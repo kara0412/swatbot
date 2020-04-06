@@ -37,7 +37,7 @@ PENALTY_SCOLDS = {
                    "before you can retaliate. %s swats for you instead!"
 }
 
-ERROR_MSG = "Oops! Something went wrong, and I'm now broken." # catch-all if swatbot starts malfunctioning
+ERROR_MSG = "Oops! Something went wrong, and I couldn't understand that." # catch-all if swatbot starts malfunctioning
 
 messages = OrderedDict()
 messages[50] = "You reached 50, ouch! I do not envy you right now."
