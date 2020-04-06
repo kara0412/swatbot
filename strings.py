@@ -23,6 +23,12 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "\n\nI can be added to as many groups as you want, and I'll keep the numbers " \
         "consistent across them all. If you're curious to see how I was created, " \
         "visit https://github.com/kara0412/swatbot."
+CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
+             "\n\n\u2022 10 swats = 1 minute of cornertime" \
+             "\n\u2022  20 swats = 1 minute of cornertime bare" \
+             "\n\u2022  2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
+             "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
+             "\n\nOf course, the best option when possible is to just take a spanking. :-) "
 
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot

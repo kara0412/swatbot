@@ -9,7 +9,7 @@ from telegram import MessageEntity
 
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT
+    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     get_nth_recent_swat_time, update_history_in_db
 import sentry_sdk
@@ -83,6 +83,9 @@ def swat_count(update, context):
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=SWAT_COUNT_NO_MENTION)
+
+def conversion(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text=CONVERSION)
 
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
@@ -203,9 +206,10 @@ def main():
     rules_handler = CommandHandler('rules', rules)
     my_swats_handler = CommandHandler('my_swats', my_swats)
     swat_count_handler = CommandHandler('swat_count', swat_count)
+    conversion_handler = CommandHandler('conversions', conversion)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
-                                swat_count_handler, mention_handler])
+                                swat_count_handler, conversion_handler, mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
