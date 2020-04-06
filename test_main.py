@@ -290,6 +290,32 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                              SWAT_UPDATE_STRING % (self.from_user_text, "increased", env_vars["PENALTY"])]
         self.assert_chat_called_with(expected_messages)
 
+    def test_no_penalty_negative_retaliation(self):
+        self.call_handler_with_message("@%s -2" % self.mention_text)
+        self.call_handler_with_message("@%s +2" % self.from_user_text,
+                                       from_user=self.mentioned_user,
+                                       entities=[self.from_user_entity])
+        expected_messages = [SWAT_UPDATE_STRING % (self.from_user_text, "increased", 2)]
+        self.assert_chat_called_with(expected_messages)
+
+    def test_no_penalty_for_kind_retaliation(self):
+        self.call_handler_with_message("@%s +2" % self.mention_text)
+        self.call_handler_with_message("@%s -2" % self.from_user_text,
+                                       from_user=self.mentioned_user,
+                                       entities=[self.from_user_entity])
+        expected_messages = [SWAT_UPDATE_STRING % (self.from_user_text, "decreased", -2)]
+        self.assert_chat_called_with(expected_messages)
+
+    def test_penalty_retaliation(self):
+        self.call_handler_with_message("@%s +2" % self.mention_text)
+        self.call_handler_with_message("@%s +2" % self.from_user_text,
+                                       from_user=self.mentioned_user,
+                                       entities=[self.from_user_entity])
+        expected_messages = [PENALTY_SCOLDS["RETALIATION"] % (env_vars["RETALIATION_TIME"], 2),
+                             SWAT_UPDATE_STRING % (self.mention_text, "increased", 2)]
+
+        self.assert_chat_called_with(expected_messages)
+
     def test_no_mention_response(self):
         self.call_handler_with_message("No mention here!", entities=[])
         assert not self.mock_bot.called

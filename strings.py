@@ -32,7 +32,9 @@ PENALTY_SCOLDS = {
     "LIMIT_PER_PERSON": "Whoa there... remember, you have to wait %s minutes before you can "
                         "add or subtract swats for %s again!",
     "LIMIT_PER_TIME_WINDOW": "Let's not get carried away... you can only add or "
-                             "subtract swats for %s people within a %s minute window."
+                             "subtract swats for %s people within a %s minute window.",
+    "RETALIATION": "Revenge is but a small circle. Remember, you gotta wait %s minutes "
+                   "before you can retaliate. %s swats for you instead!"
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I'm now broken." # catch-all if swatbot starts malfunctioning
