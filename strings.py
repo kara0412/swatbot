@@ -17,6 +17,7 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "\n3. You can only subtract %s swats at a time." \
         "\n4. You must wait %s minutes between sending swats to any particular person." \
         "\n5. You can only add or subtract swats for %s people in a %s minute window."\
+        "\n6. You must wait %s minutes before adding swats to someone who just added swats for you." \
         "\n\nEach infraction will swiftly earn you %s additional swats. These rules " \
         "are neither comprehensive nor invariable. More rules could be added at any " \
         "point. If you need a refresher, just type /rules anytime to see this list." \
@@ -24,8 +25,8 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "consistent across them all. If you're curious to see how I was created, " \
         "visit https://github.com/kara0412/swatbot."
 CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
-             "\n\n\u2022 10 swats = 1 minute of cornertime" \
-             "\n\u2022  20 swats = 1 minute of cornertime bare" \
+             "\n\n\u2022 10 swats = 1 minute of cornertime (visual proof encouraged)" \
+             "\n\u2022  20 swats = 1 minute of cornertime bare (visual proof encouraged)" \
              "\n\u2022  2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
              "\n\nOf course, the best option when possible is to just take a spanking. :-) "
@@ -40,7 +41,7 @@ PENALTY_SCOLDS = {
     "LIMIT_PER_TIME_WINDOW": "Let's not get carried away... you can only add or "
                              "subtract swats for %s people within a %s minute window.",
     "RETALIATION": "Revenge is but a small circle. Remember, you gotta wait %s minutes "
-                   "before you can retaliate. %s swats for you instead!"
+                   "before you can retaliate. %d for you instead!"
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I couldn't understand that." # catch-all if swatbot starts malfunctioning
