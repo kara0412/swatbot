@@ -45,6 +45,10 @@ PENALTY_SCOLDS = {
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I couldn't understand that." # catch-all if swatbot starts malfunctioning
+LEADERBOARD = "Your top 3 swat recipients are:" \
+              "\n\n1. %s with %d swats" \
+              "\n2. %s with %d swats" \
+              "\n3. %s with %d swats" \
 
 messages = OrderedDict()
 messages[50] = "You reached 50, ouch! I do not envy you right now."

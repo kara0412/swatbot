@@ -9,9 +9,9 @@ from telegram import MessageEntity
 
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION
+    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION, LEADERBOARD
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
-    get_nth_recent_swat_time, update_history_in_db
+    get_nth_recent_swat_time, update_history_in_db, get_top_3_recipients
 import sentry_sdk
 sentry_sdk.init(env_vars["SENTRY_DSN"])
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -83,6 +83,20 @@ def swat_count(update, context):
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=SWAT_COUNT_NO_MENTION)
+
+def leaderboard(update, context):
+    top = get_top_3_recipients()
+    construct_leaderboard = []
+    for recipient in top:
+        id, username_present, count = recipient[0], recipient[1], recipient[2]
+        if not username_present:
+            id = context.bot.get_chat_member(update.message.chat.id, id).user.first_name
+        construct_leaderboard.append((id, count))
+
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=LEADERBOARD % (construct_leaderboard[0][0], construct_leaderboard[0][1],
+                                                 construct_leaderboard[1][0], construct_leaderboard[1][1],
+                                                 construct_leaderboard[2][0], construct_leaderboard[2][1]))
 
 def conversion(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=CONVERSION)
@@ -207,9 +221,11 @@ def main():
     my_swats_handler = CommandHandler('my_swats', my_swats)
     swat_count_handler = CommandHandler('swat_count', swat_count)
     conversion_handler = CommandHandler('conversions', conversion)
+    leaderboard_handler = CommandHandler('leaderboard', leaderboard)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
-                                swat_count_handler, conversion_handler, mention_handler])
+                                swat_count_handler, conversion_handler,
+                                leaderboard_handler, mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
