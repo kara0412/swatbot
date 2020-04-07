@@ -171,6 +171,13 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         update = Update(uuid.uuid4(), message=m)
         swat_count(update, self.context)
 
+    def test_ami(self):
+        ami_user = User(1, "Ami", False, username='AmiRuckus')
+        ami_entity = MessageEntity(MessageEntity.MENTION, 0, 10, user=ami_user)
+        self.call_handler_with_message('@%s +2' % 'AmiRuckus', entities=[ami_entity])
+        expected_message = [SWAT_UPDATE_STRING % ('AmiRuckus', 'increased', 4)]
+        self.assert_chat_called_with(expected_message)
+
     def test_my_swats(self):
         self.call_handler_with_message('@%s +%d' % (self.mention_text, env_vars["MAX_INC"]))
         self.call_handler_with_message('@%s -%d' % (self.mention_text, 1))
@@ -208,7 +215,7 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         self.call_rules()
         expected_message = RULES % (env_vars["MAX_INC"], env_vars["MAX_DEC"],
                                     env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"],
-                                    env_vars["TIME_WINDOW"], env_vars["PENALTY"])
+                                    env_vars["TIME_WINDOW"], env_vars["RETALIATION_TIME"], env_vars["PENALTY"])
         self.assert_chat_called_with([expected_message])
 
     def test_milestones(self):

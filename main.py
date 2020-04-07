@@ -59,7 +59,7 @@ def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
         (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
          env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"],
-         env_vars["PENALTY"]))
+         env_vars["RETALIATION_TIME"], env_vars["PENALTY"]))
 
 def my_swats(update, context):
     from_user = update.message.from_user
@@ -191,6 +191,8 @@ def mention_response(update, context):
                     # No penalty; update receiver swat count as usual
                     old_count = get_user_count_from_db(receiver_id)
                     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
+                    if env_vars["AMI_CHEAT_ON"] == 'True' and receiver_id == 'amiruckus':
+                        count *= 2
                     update_user_count_in_db(receiver_id, username_present, count)
                     update_history_in_db(from_user_id, receiver_id, count)
                     new_count = get_user_count_from_db(receiver_id)
