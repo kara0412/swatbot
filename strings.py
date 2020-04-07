@@ -26,10 +26,12 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "visit https://github.com/kara0412/swatbot."
 CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "\n\n\u2022 10 swats = 1 minute of cornertime (visual proof encouraged)" \
-             "\n\u2022  20 swats = 1 minute of cornertime bare (visual proof encouraged)" \
-             "\n\u2022  2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
+             "\n\u2022 20 swats = 1 minute of cornertime bare (visual proof encouraged)" \
+             "\n\u2022 2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
-             "\n\nOf course, the best option when possible is to just take a spanking. :-) "
+             "\n\u2022 10 swats = 1 minute of service time (for tops)" \
+             "\n\nOf course, the best option when possible is to just take a spanking. :-) " \
+             "\n\nNote for tops: I know your options are sparse. Soliciting ideas for you!"
 
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot
@@ -50,6 +52,15 @@ LEADERBOARD = "Your top 3 swat recipients are:" \
               "\n2. %s with %d swats" \
               "\n3. %s with %d swats" \
 
+HELP = "Here's a handy list of commands for you. " \
+       "\n\n\u2022 Add swats: @<mention> +5" \
+       "\n\u2022 Subtract swats: @<mention> -2" \
+       "\n\u2022 View rules: /rules" \
+       "\n\u2022 View conversions for resolving swats: /conversions" \
+       "\n\u2022 View leaderboard: /leaderboard" \
+       "\n\u2022 View your swat count: /my_swats" \
+       "\n\u2022 View other people's counts: /swat_count @<mention> @<other_mention>" \
+       "\n\nHappy swatting!"
 messages = OrderedDict()
 messages[50] = "You reached 50, ouch! I do not envy you right now."
 messages[100] = "Oh boy, over 100 swats! Looks like you have a big spanking coming..."

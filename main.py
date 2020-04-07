@@ -9,7 +9,8 @@ from telegram import MessageEntity
 
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION, LEADERBOARD
+    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION, \
+    LEADERBOARD, HELP
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     get_nth_recent_swat_time, update_history_in_db, get_top_3_recipients
 import sentry_sdk
@@ -55,6 +56,9 @@ def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Hello! I'm SwatBot.")
 
+def help(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=HELP % ())
 def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
         (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
@@ -222,10 +226,12 @@ def main():
     swat_count_handler = CommandHandler('swat_count', swat_count)
     conversion_handler = CommandHandler('conversions', conversion)
     leaderboard_handler = CommandHandler('leaderboard', leaderboard)
+    help_handler = CommandHandler('help', help)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
-                                leaderboard_handler, mention_handler])
+                                leaderboard_handler, help_handler,
+                                mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
