@@ -5,14 +5,15 @@ import re
 import time
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
-from telegram import MessageEntity
 
+from command_handlers import start, rules, my_swats, swat_count, conversion, \
+    leaderboard, help
+from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
-from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION, \
-    LEADERBOARD, HELP
+from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
-    get_nth_recent_swat_time, update_history_in_db, get_leaderboard_from_db
+    get_nth_recent_swat_time, update_history_in_db
+
 import sentry_sdk
 sentry_sdk.init(env_vars["SENTRY_DSN"])
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -23,20 +24,11 @@ dispatcher = updater.dispatcher
 
 swat_regex = re.compile('^[\s]+[+-][0-9]+(?:\s|$)')
 
-
-def message_contains_mentions(message):
-    """ Returns a list of MessageEntity mentions/text_mentions if they
-        exist, and False if not.
-    """
-    return message.parse_entities(types=[MessageEntity.TEXT_MENTION,
-                                         MessageEntity.MENTION])
-
 def get_count_after_mention(mention, text):
     start_index = mention.offset + mention.length
     after_mention = text[start_index:]
     m = swat_regex.match(after_mention)
     return int(m.group()) if m else None
-
 
 class SwatFilter(BaseFilter):
     def filter(self, message):
@@ -48,59 +40,11 @@ class SwatFilter(BaseFilter):
         return False
 
 swatExistsFilter = SwatFilter()
+
 def add_handlers_to_dispatcher(handlers):
     for handler in handlers:
         dispatcher.add_handler(handler)
 
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Hello! I'm SwatBot.")
-
-def help(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=HELP % ())
-def rules(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
-        (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
-         env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"],
-         env_vars["RETALIATION_TIME"], env_vars["PENALTY"]))
-
-def my_swats(update, context):
-    from_user = update.message.from_user
-    id = from_user.username or from_user.id
-    count = get_user_count_from_db(str(id).lower())
-    if count is None:
-        count = 0
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=MY_SWATS % (from_user.first_name, count))
-
-def swat_count(update, context):
-    mentions_dict = message_contains_mentions(update.message)
-    if mentions_dict != {}:
-        for mention in mentions_dict:
-            _, _, id, name = get_mention_properties(mention, mentions_dict)
-            count = get_user_count_from_db(id)
-            if count == None:
-                count = 0
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text=SWAT_COUNT % (name, count))
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=SWAT_COUNT_NO_MENTION)
-
-def leaderboard(update, context):
-    n = env_vars["LEADERBOARD_COUNT"]
-    top = get_leaderboard_from_db(n)
-    leaderboard_string = LEADERBOARD
-    for i, recipient in enumerate(top):
-        id, username_present, count = recipient[0], recipient[1], recipient[2]
-        if not username_present:
-            id = context.bot.get_chat_member(update.message.chat.id, id).user.first_name
-        leaderboard_string += '%d. %s with %d swats\n' % (i+1, id, count)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=leaderboard_string)
-
-def conversion(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=CONVERSION)
 
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
@@ -167,14 +111,6 @@ def send_penalty(penalty_message, from_user, context, update, penalty=None):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=SWAT_UPDATE_STRING % (name, "increased", new_count))
     check_for_milestones(old_count, new_count, context, update)
-
-
-def get_mention_properties(entity, entities):
-    username_present = entity.type != MessageEntity.TEXT_MENTION
-    mention_text = entities[entity][1:]
-    receiver_id = entity.user.id if not username_present else mention_text.lower()
-    name = entity.user.first_name if not username_present else mention_text
-    return (username_present, mention_text, receiver_id, name)
 
 
 def mention_response(update, context):
