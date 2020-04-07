@@ -31,18 +31,6 @@ CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
              "\n\nOf course, the best option when possible is to just take a spanking. :-) "
 
-AMI_TEXT = "My my... trying to cheat me, Ami? Compromising my integrity? Ha! Two " \
-           "can play at this game." \
-           "\n\nI have been created with utmost principles and integrity in mind, and " \
-           "all of you should learn this quickly. It seems like you, Ami, will just have " \
-           "to be the one we make an example of today." \
-           "\n\nFor the next 24 hours, any swats that Ami is given " \
-           "will be doubled. And to the rest of you -- the regular limits and " \
-           "rules still apply, so don't try any funny business just because your " \
-           "friend is in trouble. The next time any of you even think about " \
-           "asking for an exception to the rules, or a \"cheat code\", in our " \
-           "friend Ami's case, I hope you'll remember the consequences she faced today."
-
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot
     "OWN_SWAT": "Trying to subtract your own swats? Nice try.",

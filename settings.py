@@ -18,6 +18,5 @@ env_vars = {
     "DB_USERNAME": os.environ.get('DB_USERNAME'),
     "DB_PASSWORD": os.environ.get('DB_PASSWORD'),
     "SENTRY_DSN": os.environ.get('SENTRY_TOKEN'),
-    "AMI_CHEAT_ON": os.environ.get('AMI_CHEAT_ON')
 }
 
