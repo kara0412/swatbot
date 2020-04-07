@@ -13,9 +13,10 @@ env_vars = {
     "PER_PERSON_TIME_LIMIT": int(os.environ.get('PER_PERSON_TIME_LIMIT')),
     "TIME_WINDOW_LIMIT_COUNT": int(os.environ.get('TIME_WINDOW_LIMIT_COUNT')),
     "TIME_WINDOW": int(os.environ.get('TIME_WINDOW')),
-    "ENV": os.environ.get('ENV'),
+    "RETALIATION_TIME": int(os.environ.get('RETALIATION_TIME')),
     "DB_USERNAME": os.environ.get('DB_USERNAME'),
     "DB_PASSWORD": os.environ.get('DB_PASSWORD'),
     "SENTRY_DSN": os.environ.get('SENTRY_TOKEN'),
+    "LEADERBOARD_COUNT": os.environ.get('LEADERBOARD_COUNT')
 }
 
