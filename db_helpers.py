@@ -69,12 +69,12 @@ def get_nth_recent_swat_time(giver, receiver=None, n=1, count_must_inc=False):
     cur.close()
     return result
 
-def get_top_3_recipients():
+def get_leaderboard_from_db(n):
     sql = """SELECT * FROM users 
-             ORDER BY received_swats_count DESC LIMIT 3;"""
+             ORDER BY received_swats_count DESC LIMIT %s;"""
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute(sql)
+    cur.execute(sql, (str(n),))
     result = cur.fetchall()
     conn.commit()
     cur.close()

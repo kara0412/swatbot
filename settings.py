@@ -18,5 +18,6 @@ env_vars = {
     "DB_USERNAME": os.environ.get('DB_USERNAME'),
     "DB_PASSWORD": os.environ.get('DB_PASSWORD'),
     "SENTRY_DSN": os.environ.get('SENTRY_TOKEN'),
+    "LEADERBOARD_COUNT": os.environ.get('LEADERBOARD_COUNT')
 }
 

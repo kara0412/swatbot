@@ -20,17 +20,15 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "\n6. You must wait %s minutes before adding swats to someone who just added swats for you." \
         "\n\nEach infraction will swiftly earn you %s additional swats. These rules " \
         "are neither comprehensive nor invariable. More rules could be added at any " \
-        "point. If you need a refresher, just type /rules anytime to see this list." \
-        "\n\nI can be added to as many groups as you want, and I'll keep the numbers " \
-        "consistent across them all. If you're curious to see how I was created, " \
-        "visit https://github.com/kara0412/swatbot."
+        "point. If you need a refresher, just type /rules anytime to see this list."
 CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "\n\n\u2022 10 swats = 1 minute of cornertime (visual proof encouraged)" \
              "\n\u2022 20 swats = 1 minute of cornertime bare (visual proof encouraged)" \
              "\n\u2022 2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
              "\n\u2022 10 swats = 1 minute of service time (for tops)" \
-             "\n\nOf course, the best option when possible is to just take a spanking. :-) " \
+             "\n\nOf course, the best option when possible is to just take a spanking. :-) Talk to me when you've " \
+             "completed one (or more!) of these options, and I'll reset your swat count accordingly." \
              "\n\nNote for tops: I know your options are sparse. Soliciting ideas for you!"
 
 PENALTY_SCOLDS = {
@@ -47,10 +45,7 @@ PENALTY_SCOLDS = {
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I couldn't understand that." # catch-all if swatbot starts malfunctioning
-LEADERBOARD = "Your top 3 swat recipients are:" \
-              "\n\n1. %s with %d swats" \
-              "\n2. %s with %d swats" \
-              "\n3. %s with %d swats" \
+LEADERBOARD = "Our top miscreants are:\n\n"
 
 HELP = "Here's a handy list of commands for you. " \
        "\n\n\u2022 Add swats: @<mention> +5" \
@@ -59,7 +54,7 @@ HELP = "Here's a handy list of commands for you. " \
        "\n\u2022 View conversions for resolving swats: /conversions" \
        "\n\u2022 View leaderboard: /leaderboard" \
        "\n\u2022 View your swat count: /my_swats" \
-       "\n\u2022 View other people's counts: /swat_count @<mention> @<other_mention>" \
+       "\n\u2022 View other people's counts: /swat_count @<mention> @<other>" \
        "\n\nHappy swatting!"
 messages = OrderedDict()
 messages[50] = "You reached 50, ouch! I do not envy you right now."

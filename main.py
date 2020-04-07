@@ -12,7 +12,7 @@ from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
     ERROR_MSG, MY_SWATS, SWAT_COUNT_NO_MENTION, SWAT_COUNT, CONVERSION, \
     LEADERBOARD, HELP
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
-    get_nth_recent_swat_time, update_history_in_db, get_top_3_recipients
+    get_nth_recent_swat_time, update_history_in_db, get_leaderboard_from_db
 import sentry_sdk
 sentry_sdk.init(env_vars["SENTRY_DSN"])
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -89,18 +89,15 @@ def swat_count(update, context):
                                  text=SWAT_COUNT_NO_MENTION)
 
 def leaderboard(update, context):
-    top = get_top_3_recipients()
-    construct_leaderboard = []
-    for recipient in top:
+    n = env_vars["LEADERBOARD_COUNT"]
+    top = get_leaderboard_from_db(n)
+    leaderboard_string = LEADERBOARD
+    for i, recipient in enumerate(top):
         id, username_present, count = recipient[0], recipient[1], recipient[2]
         if not username_present:
             id = context.bot.get_chat_member(update.message.chat.id, id).user.first_name
-        construct_leaderboard.append((id, count))
-
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=LEADERBOARD % (construct_leaderboard[0][0], construct_leaderboard[0][1],
-                                                 construct_leaderboard[1][0], construct_leaderboard[1][1],
-                                                 construct_leaderboard[2][0], construct_leaderboard[2][1]))
+        leaderboard_string += '%d. %s with %d swats\n' % (i+1, id, count)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=leaderboard_string)
 
 def conversion(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=CONVERSION)
