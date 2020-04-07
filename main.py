@@ -6,8 +6,7 @@ import time
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 
-from command_handlers import start, rules, my_swats, swat_count, conversion, \
-    leaderboard, help
+
 from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, ERROR_MSG
@@ -153,17 +152,20 @@ def mention_response(update, context):
 
 def main():
     """Start the bot."""
+    from command_handlers import \
+        start, rules, my_swats, swat_count, conversion, leaderboard, resolve, help
     start_handler = CommandHandler('start', start)
     rules_handler = CommandHandler('rules', rules)
     my_swats_handler = CommandHandler('my_swats', my_swats)
     swat_count_handler = CommandHandler('swat_count', swat_count)
     conversion_handler = CommandHandler('conversions', conversion)
     leaderboard_handler = CommandHandler('leaderboard', leaderboard)
+    resolve_handler = CommandHandler('resolve', resolve)
     help_handler = CommandHandler('help', help)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
-                                leaderboard_handler, help_handler,
+                                leaderboard_handler, help_handler, resolve_handler,
                                 mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])

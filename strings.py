@@ -27,8 +27,10 @@ CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "\n\u2022 2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
              "\n\u2022 10 swats = 1 minute of service time (for tops)" \
-             "\n\nOf course, the best option when possible is to just take a spanking. :-) Talk to me when you've " \
-             "completed one (or more!) of these options, and I'll reset your swat count accordingly." \
+             "\n\nOf course, the best option when possible is to just take a spanking. :-) DM me when you've " \
+             "completed one (or more!) of these options, and I'll reset your swat count accordingly. You'll never be " \
+             "allowed to go into negative swats via resolving, so the minimum number I'll reset your count to is 0. To build up " \
+             "negative swats, you'll have to do nice things and get people to subtract for you instead." \
              "\n\nNote for tops: I know your options are sparse. Soliciting ideas for you!"
 
 PENALTY_SCOLDS = {
@@ -43,6 +45,14 @@ PENALTY_SCOLDS = {
     "RETALIATION": "Revenge is but a small circle. Remember, you gotta wait %s minutes "
                    "before you can retaliate. %d for you instead!"
 }
+PRAISE_MESSAGES = [
+    "I'm proud of you.",
+    "You did a good job.",
+    "You're setting a wonderful example.",
+    "I know you've learned your lesson.",
+    "I know you'll be well-behaved from now on."
+]
+
 
 ERROR_MSG = "Oops! Something went wrong, and I couldn't understand that." # catch-all if swatbot starts malfunctioning
 LEADERBOARD = "Our top miscreants are:\n\n"

@@ -2,11 +2,13 @@ import unittest
 import uuid
 
 import psycopg2
+
+from command_handlers import resolve, my_swats, swat_count, rules
 from db_helpers import get_conn
-from main import mention_response, my_swats, swat_count, rules
+from main import mention_response
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, MY_SWATS, \
-    SWAT_COUNT, RULES, SWAT_COUNT_NO_MENTION
+    SWAT_COUNT, RULES, SWAT_COUNT_NO_MENTION, PRAISE_MESSAGES
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -54,6 +56,11 @@ def setup_database():
     server_cur.close()
 
 
+class Context():
+    def __init__(self, mock_bot, args=None):
+        self.bot = mock_bot
+        self.args = args
+
 class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
 
     @classmethod
@@ -88,12 +95,8 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                 return text
         mock_bot = MockBot()
 
-        class Context():
-            def __init__(self):
-                self.bot = mock_bot
-
         self.mock_bot = mock_bot
-        self.context = Context()
+        self.context = Context(self.mock_bot)
 
         create_users_sql = """CREATE TABLE users(
                                         user_id VARCHAR (50) UNIQUE PRIMARY KEY NOT NULL,
@@ -170,6 +173,53 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
                     self.chat, text=command, entities=mention_entities)
         update = Update(uuid.uuid4(), message=m)
         swat_count(update, self.context)
+
+    def call_resolve(self, user=None, from_user=None, count=None):
+        from_user = self.from_user if not from_user else from_user
+        context = Context(self.mock_bot, ['blah', str(count)])
+        command = '/resolve '
+        m = Message(uuid.uuid4(), from_user, datetime.now(), self.chat, text=command)
+        if user:
+            id = user.first_name if user.username is None else user.username
+            mention_type = MessageEntity.TEXT_MENTION if user.username is None else MessageEntity.MENTION
+            mention = MessageEntity(mention_type, len(command), len(id) + 1, user=user)
+            command = command + '@' + id + ' ' + str(count)
+            m = Message(uuid.uuid4(), from_user, datetime.now(), self.chat,
+                        text=command, entities=[mention])
+        update = Update(uuid.uuid4(), message=m)
+        resolve(update, context)
+
+    def test_resolving_permissions(self):
+        self.call_resolve()
+        self.assert_chat_called_with(['Sorry, only a moderator can do that, but nice try!'])
+
+        other_user_me = User(env_vars["ME_ID"], "Me", False)
+        self.call_resolve(from_user=other_user_me)
+        self.assert_chat_called_with(['Send me a mention and a positive number of swats to resolve.'])
+
+    def test_resolver(self):
+        me_user = User(env_vars["ME_ID"], "Me", False)
+        self.call_handler_with_message('@%s +3' % self.from_user_text, entities=[self.from_user_entity])
+        self.call_handler_with_message('@%s -2' % self.mention_text)
+
+        self.call_resolve(user=self.from_user, from_user=me_user, count=3)
+        expected_messages = "%s, your swat count has been resolved to %d." % (self.from_user_text, 0)
+        assert expected_messages in self.mock_bot.called_with[2]
+        praise = self.mock_bot.called_with[2].split('. ')[1]
+        assert praise in PRAISE_MESSAGES
+
+        self.call_resolve(user=self.from_user, from_user=me_user, count=3)
+        expected_messages = "%s already has %d swats, no need to resolve!" % (self.from_user_text, 0)
+        assert expected_messages in self.mock_bot.called_with[3]
+
+        self.mock_bot.called_with = []
+        self.call_handler_with_message('@%s +3' % self.from_user_text, entities=[self.from_user_entity])
+        self.call_resolve(user=self.from_user, from_user=me_user, count=2)
+        expected_messages = "%s, your swat count has been resolved to %d." % (self.from_user_text, 1)
+        assert expected_messages in self.mock_bot.called_with[2]
+
+        self.call_resolve(user=self.mentioned_user, from_user=me_user, count=2)
+        self.assertEqual("%s already has %d swats, no need to resolve!" % (self.mention_text, -2), self.mock_bot.called_with[3])
 
     def test_my_swats(self):
         self.call_handler_with_message('@%s +%d' % (self.mention_text, env_vars["MAX_INC"]))
