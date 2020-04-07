@@ -8,7 +8,7 @@ from telegram import MessageEntity
 
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, RULES, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG
+    ERROR_MSG, AMI_TEXT
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     should_rate_limit_per_person, should_rate_limit_for_anyone
 import sentry_sdk
@@ -57,6 +57,9 @@ def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
         (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"]))
 
+def ami(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text=AMI_TEXT)
+
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
         if old < key and new >= key:
@@ -68,8 +71,13 @@ def check_for_milestones(old, new, context, update):
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text=milestone_message)
 
+def is_ami(user):
+    id = user.id if not user.username else user.username.lower()
+    return id == 'amiruckus'
+
 def look_for_penalties(username_present, receiver_id, name, count, from_user, bot_username):
     penalty_conditions = [
+        (lambda: env_vars["AMI_CHEAT_ON"] == 'True' and is_ami(from_user), PENALTY_SCOLDS["AMI_SWAT"]),
         (lambda: receiver_id == bot_username, PENALTY_SCOLDS["SWATTING_BOT"]),
         (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                   or (username_present and from_user.username and from_user.username.lower() == receiver_id and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
@@ -127,6 +135,8 @@ def mention_response(update, context):
 
                     # No penalty; update receiver swat count as usual
                     old_count = get_user_count_from_db(receiver_id)
+                    if env_vars["AMI_CHEAT_ON"] == 'True' and receiver_id == 'amiruckus':
+                        count *=2
                     update_user_count_in_db(from_user.id, receiver_id, username_present, count)
                     new_count = get_user_count_from_db(receiver_id)
                     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -144,7 +154,8 @@ def main():
     start_handler = CommandHandler('start', start)
     rules_handler = CommandHandler('rules', rules)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
-    add_handlers_to_dispatcher([start_handler, rules_handler, mention_handler])
+    ami_handler = CommandHandler('override_Ami_code5778', ami)
+    add_handlers_to_dispatcher([start_handler, rules_handler, mention_handler, ami_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()

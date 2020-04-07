@@ -22,6 +22,20 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "consistent across them all. If you're curious to see how I was created, " \
         "visit https://github.com/kara0412/swatbot."
 
+AMI_TEXT = "I'm disappointed, Ami. Trying to cheat me? Compromise my integrity? Given that you've " \
+           "known me the longest, I'd expected you to set an " \
+           "exemplary standard of behavior for the rest. I suppose I was wrong." \
+           "\n\nI have been created with utmost principles and integrity in mind, and " \
+           "all of you should learn this quickly. It seems like you, Ami, will just have " \
+           "to be the one we make an example of today. " \
+           "\n\nFor the next 24 hours, Ami's swat privileges are revoked. Furthermore," \
+           " any swats that she is given " \
+           "will be doubled. And to the rest of you -- the regular limits and " \
+           "rules still apply, so don't try any funny business just because your " \
+           "friend is in trouble. The next time any of you even think about " \
+           "asking for an exception to the rules, or a \"cheat code\", in our " \
+           "friend Ami's case, I hope you'll learn from the consequences she faced today."
+
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot
     "OWN_SWAT": "Trying to subtract your own swats? Nice try.",
@@ -30,7 +44,8 @@ PENALTY_SCOLDS = {
     "LIMIT_PER_PERSON": "Whoa there... remember, you have to wait %s minutes before you can "
                         "add or subtract swats for %s again!",
     "LIMIT_PER_TIME_WINDOW": "Let's not get carried away... you can only add or "
-                             "subtract swats for %s people within a %s minute window."
+                             "subtract swats for %s people within a %s minute window.",
+    "AMI_SWAT": "Your swat privileges are revoked, Ami."
 }
 
 ERROR_MSG = "Oops! Something went wrong, and I'm now broken." # catch-all if swatbot starts malfunctioning
