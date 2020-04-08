@@ -15,7 +15,7 @@ RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll ke
         "\n\n1. You can't subtract your own swats." \
         "\n2. You can only add %s swats at a time." \
         "\n3. You can only subtract %s swats at a time." \
-        "\n4. You must wait %s minutes between sending swats to any particular person." \
+        "\n4. You must wait %s minutes between adding or subtracting swats for any particular person." \
         "\n5. You can only add or subtract swats for %s people in a %s minute window."\
         "\n6. You must wait %s minutes before adding swats to someone who just added swats for you." \
         "\n\nEach infraction will swiftly earn you %s additional swats. These rules " \
@@ -27,6 +27,7 @@ CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "\n\u2022 2 swats = 1 line (ask your top or the group to assign you a line, visual proof required)" \
              "\n\u2022 50 swats = 250 word essay (ask your top or the group to assign you a topic, visual proof required)" \
              "\n\u2022 10 swats = 1 minute of service time (for tops)" \
+             "\n\u2022 1 swat = 1 self-spank" \
              "\n\nOf course, the best option when possible is to just take a spanking. :-) DM me when you've " \
              "completed one (or more!) of these options, and I'll reset your swat count accordingly. You'll never be " \
              "allowed to go into negative swats via resolving, so the minimum number I'll reset your count to is 0. To build up " \
