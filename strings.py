@@ -7,9 +7,9 @@ MY_SWATS = "%s, your swat count is %d."
 SWAT_COUNT_NO_MENTION = "You need to mention a user, like: /swat_count @Joe"
 SWAT_COUNT = "%s's swat count is %d."
 RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll keep track of " \
-        "how many they have coming. For example, you can type @<mention> +5 to give someone " \
-        "5 swats if they misbehave. And if they do something nice, you can subtract swats by " \
-        "typing @<mention> -5! " \
+        "how many they have coming. For example, you can type @<mention> +%s to give someone " \
+        "%s swats if they misbehave. And if they do something nice, you can subtract swats by " \
+        "typing @<mention> -%s! " \
         "\n\nBe careful, though... there are rules. This is a spanking " \
         "bot after all. And you know what that means if you disobey!" \
         "\n\n1. You can't subtract your own swats." \

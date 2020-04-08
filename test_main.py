@@ -256,7 +256,8 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
 
     def test_rules(self):
         self.call_rules()
-        expected_message = RULES % (env_vars["MAX_INC"], env_vars["MAX_DEC"],
+        expected_message = RULES % (env_vars["MAX_INC"], env_vars["MAX_INC"],
+                                    env_vars["MAX_DEC"], env_vars["MAX_INC"], env_vars["MAX_DEC"],
                                     env_vars["PER_PERSON_TIME_LIMIT"], env_vars["TIME_WINDOW_LIMIT_COUNT"],
                                     env_vars["TIME_WINDOW"], env_vars["RETALIATION_TIME"], env_vars["PENALTY"])
         self.assert_chat_called_with([expected_message])

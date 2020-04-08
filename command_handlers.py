@@ -17,7 +17,8 @@ def help(update, context):
                              text=HELP % ())
 def rules(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
-        (env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
+        (env_vars["MAX_INC"], env_vars["MAX_INC"], env_vars["MAX_DEC"],
+         env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
          env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"],
          env_vars["RETALIATION_TIME"], env_vars["PENALTY"]))
 
