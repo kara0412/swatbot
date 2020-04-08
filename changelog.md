@@ -1,3 +1,6 @@
+## Release 4/7 x2
+- Resolving swats handler
+
 ## Release 4/7
 - /help command
 - /leaderboard
