@@ -60,10 +60,6 @@ def check_for_milestones(old, new, context, update):
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text=milestone_message)
 
-def is_ami(user):
-    id = user.id if not user.username else user.username.lower()
-    return id == 'amiruckus'
-
 def eval_hit_time_limit(secs, limit):
     if secs == None:
         return False
@@ -90,7 +86,7 @@ def should_rate_limit_for_anyone(giver_id):
 def look_for_penalties(username_present, receiver_id, name, count, from_user, bot_username):
     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
     penalty_conditions = [
-        (lambda: env_vars["AMI_CHEAT_ON"] == 'True' and is_ami(from_user), PENALTY_SCOLDS["AMI_SWAT"]),
+        (lambda: env_vars["AMI_CHEAT_ON"] == 'True' and from_user_id == 'amiruckus', PENALTY_SCOLDS["AMI_SWAT"]),
         (lambda: receiver_id == bot_username, PENALTY_SCOLDS["SWATTING_BOT"]),
         (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                   or (username_present and from_user.username and from_user.username.lower() == receiver_id and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
