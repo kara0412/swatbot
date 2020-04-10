@@ -143,24 +143,6 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         mention_response(update, self.context)
 
 
-    def test_ami_swat_privs(self):
-        ami_user = User(1, "Ami", False, username='AmiRuckus')
-        self.call_handler_with_message('@%s +2' % self.mention_text,
-                                       from_user=ami_user)
-        expected_message = ["Your swat privileges are revoked, Ami."]
-        self.assertEqual(self.mock_bot.called_with[0], expected_message[0])
-        self.assertEqual(self.mock_bot.called_with[1], SWAT_UPDATE_STRING % (ami_user.username, 'increased', 5))
-        self.assert_chat_called_with(expected_message)
-
-    def test_double_swats_ami(self):
-        ami_user = User(1, "Ami", False, username='AmiRuckus')
-        ami_entity = MessageEntity(MessageEntity.MENTION, 0, 10, user=ami_user)
-        self.call_handler_with_message('@%s +2' % 'AmiRuckus',
-                                       entities=[ami_entity])
-        expected_message = [SWAT_UPDATE_STRING % ('AmiRuckus', 'increased', 4)]
-        self.assertEqual(self.mock_bot.called_with, expected_message)
-        self.assert_chat_called_with(expected_message)
-
     def call_my_swats(self):
         m = Message(uuid.uuid4(), self.mentioned_user, datetime.now(), self.chat,
                     text='/my_swats')

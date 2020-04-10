@@ -34,21 +34,6 @@ CONVERSION = "Ready to resolve some of your swats? Here are your options:" \
              "negative swats, you'll have to do nice things and get people to subtract for you instead." \
              "\n\nNote for tops: I know your options are sparse. Soliciting ideas for you!"
 
-AMI_TEXT = "Ami, you cracked the code! Unfortunately for you, it's not going to be quite what you expected. " \
-           "\n\nI'm surprised you actually went through with this. Trying to cheat " \
-           "me? Compromise my integrity? Given that you've known me the longest, " \
-           "I'd expected you to set an exemplary standard of behavior for the rest. I suppose I was wrong." \
-           "\n\nI have been created with utmost principles and integrity in mind, and " \
-           "all of you should learn this quickly. It seems like you, Ami, will just have " \
-           "to be the one we make an example of today. " \
-           "\n\nUntil tomorrow morning, Ami's swat privileges are revoked. Furthermore," \
-           " any swats that she is given " \
-           "will be doubled. And to the rest of you -- the regular limits and " \
-           "rules still apply, so don't try any funny business just because your " \
-           "friend is in trouble. The next time any of you even think about " \
-           "asking for an exception to the rules, or a \"cheat code,\" in our " \
-           "friend Ami's case, I hope you'll learn from the consequences she faced today."
-
 PENALTY_SCOLDS = {
     "SWATTING_BOT": "Lol.", # if someone tries to swat the bot
     "OWN_SWAT": "Trying to subtract your own swats? Nice try.",
@@ -58,7 +43,6 @@ PENALTY_SCOLDS = {
                         "add or subtract swats for %s again!",
     "LIMIT_PER_TIME_WINDOW": "Let's not get carried away... you can only add or "
                              "subtract swats for %s people within a %s minute window.",
-    "AMI_SWAT": "Your swat privileges are revoked, Ami.",
     "RETALIATION": "Revenge is but a small circle. Remember, you gotta wait %s minutes "
                    "before you can retaliate. %d for you instead!"
 }

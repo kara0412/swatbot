@@ -10,7 +10,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, \
-    ERROR_MSG, AMI_TEXT
+    ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     get_nth_recent_swat_time, update_history_in_db
 
@@ -45,9 +45,6 @@ def add_handlers_to_dispatcher(handlers):
     for handler in handlers:
         dispatcher.add_handler(handler)
 
-
-def ami(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=AMI_TEXT)
 
 def crossed_milestone(old, new):
     for key, value in MILESTONES.items():
@@ -86,7 +83,6 @@ def should_rate_limit_for_anyone(giver_id):
 def look_for_penalties(username_present, receiver_id, name, count, from_user, bot_username):
     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
     penalty_conditions = [
-        (lambda: env_vars["AMI_CHEAT_ON"] == 'True' and from_user_id == 'amiruckus', PENALTY_SCOLDS["AMI_SWAT"]),
         (lambda: receiver_id == bot_username, PENALTY_SCOLDS["SWATTING_BOT"]),
         (lambda: ((not username_present and from_user.id == receiver_id and count < 0)
                   or (username_present and from_user.username and from_user.username.lower() == receiver_id and count < 0)), PENALTY_SCOLDS["OWN_SWAT"]),
@@ -100,10 +96,6 @@ def look_for_penalties(username_present, receiver_id, name, count, from_user, bo
     for condition, penalty_string in penalty_conditions:
         if condition():
             return penalty_string
-
-def free_ami_handler(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Ami, you're freed! And forgiven. You can resume swatting as normal.")
 
 def send_penalty(penalty_message, from_user, context, update, penalty=None):
     penalty_count = env_vars["PENALTY"] if penalty is None else penalty
@@ -145,8 +137,6 @@ def mention_response(update, context):
 
                     # No penalty; update receiver swat count as usual
                     old_count = get_user_count_from_db(receiver_id)
-                    if env_vars["AMI_CHEAT_ON"] == 'True' and receiver_id == 'amiruckus':
-                        count *=2
                     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
                     update_user_count_in_db(receiver_id, username_present, count)
                     update_history_in_db(from_user_id, receiver_id, count)
@@ -174,12 +164,10 @@ def main():
     resolve_handler = CommandHandler('resolve', resolve)
     help_handler = CommandHandler('help', help)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
-    ami_handler = CommandHandler('override_Ami_code5778', ami)
-    free_ami = CommandHandler('free_ami', free_ami_handler)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
                                 leaderboard_handler, help_handler, resolve_handler,
-                                mention_handler, free_ami, ami_handler])
+                                mention_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
