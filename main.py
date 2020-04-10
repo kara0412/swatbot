@@ -101,6 +101,10 @@ def look_for_penalties(username_present, receiver_id, name, count, from_user, bo
         if condition():
             return penalty_string
 
+def free_ami_handler(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="Ami, you're freed! And forgiven. You can resume swatting as normal.")
+
 def send_penalty(penalty_message, from_user, context, update, penalty=None):
     penalty_count = env_vars["PENALTY"] if penalty is None else penalty
     from_user_id, name = from_user.id, from_user.first_name
@@ -171,10 +175,11 @@ def main():
     help_handler = CommandHandler('help', help)
     mention_handler = MessageHandler(swatExistsFilter, mention_response)
     ami_handler = CommandHandler('override_Ami_code5778', ami)
+    free_ami = CommandHandler('free_ami', free_ami_handler)
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
                                 leaderboard_handler, help_handler, resolve_handler,
-                                mention_handler, ami_handler])
+                                mention_handler, free_ami, ami_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
