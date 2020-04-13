@@ -19,6 +19,7 @@ env_vars = {
     "SENTRY_DSN": os.environ.get('SENTRY_TOKEN'),
     "AMI_CHEAT_ON": os.environ.get('AMI_CHEAT_ON'),
     "LEADERBOARD_COUNT": os.environ.get('LEADERBOARD_COUNT'),
-    "ME_ID": int(os.environ.get('ME_ID'))
+    "ME_ID": int(os.environ.get('ME_ID')),
+    "CHAT_ID": int(os.environ.get('CHAT_ID'))
 }
 
