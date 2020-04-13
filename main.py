@@ -114,6 +114,8 @@ def send_penalty(penalty_message, from_user, context, update, penalty=None):
 
 
 def mention_response(update, context):
+    print("!!!!!!!!")
+    print(update.effective_chat.id)
     try:
         from_user = update.message.from_user
         entities = message_contains_mentions(update.message)
