@@ -9,13 +9,19 @@ from strings import HELP, RULES, MY_SWATS, LEADERBOARD, CONVERSION, \
 
 
 def start(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Hello! I'm SwatBot.")
 
 def help(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=HELP % ())
 def rules(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     context.bot.send_message(chat_id=update.effective_chat.id, text=RULES %
         (env_vars["MAX_INC"], env_vars["MAX_INC"], env_vars["MAX_DEC"],
          env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
@@ -23,6 +29,8 @@ def rules(update, context):
          env_vars["RETALIATION_TIME"], env_vars["PENALTY"]))
 
 def my_swats(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     from_user = update.message.from_user
     id = from_user.username or from_user.id
     count = get_user_count_from_db(str(id).lower())
@@ -32,6 +40,8 @@ def my_swats(update, context):
                              text=MY_SWATS % (from_user.first_name, count))
 
 def swat_count(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     mentions_dict = message_contains_mentions(update.message)
     if mentions_dict != {}:
         for mention in mentions_dict:
@@ -46,6 +56,8 @@ def swat_count(update, context):
                                  text=SWAT_COUNT_NO_MENTION)
 
 def leaderboard(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     n = env_vars["LEADERBOARD_COUNT"]
     top = get_leaderboard_from_db(n)
     leaderboard_string = LEADERBOARD
@@ -57,9 +69,13 @@ def leaderboard(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=leaderboard_string)
 
 def conversion(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     context.bot.send_message(chat_id=update.effective_chat.id, text=CONVERSION)
 
 def resolve(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     if update.message.from_user.id != env_vars["ME_ID"]:
         context.bot.send_message(chat_id=update.effective_chat.id, text='Sorry, only a moderator can do that, but nice try!')
         return
