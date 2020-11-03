@@ -152,7 +152,7 @@ def mention_response(update, context):
                         context.bot.send_message(chat_id=update.effective_chat.id,
                                                  text="%s has subtracted %d swats from everyone." %
                                                       (from_user.first_name, abs(count)))
-                        return
+                        continue
 
                     old_count = get_user_count_from_db(receiver_id)
                     update_user_count_in_db(receiver_id, username_present, count)
