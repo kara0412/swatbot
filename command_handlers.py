@@ -37,7 +37,7 @@ def voting(update, context):
         return
     username_present = bool(user.username) or False
     old_count = get_user_count_from_db(str(id))
-    to_subtract = math.ceil(old_count*0.1)
+    to_subtract = math.ceil(abs(old_count)*0.1)
     new_count = old_count - to_subtract
     update_user_count_in_db(id, username_present, new_count)
     update_history_in_db('vote_resolver', id, -(to_subtract))
