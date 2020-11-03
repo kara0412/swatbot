@@ -31,7 +31,7 @@ def rules(update, context):
 
 def voting(update, context):
     user = update.effective_user
-    id = user.username.lower() or user.id
+    id = (user.username or str(user.id)).lower()
     if has_voted(id):
         context.bot.send_message(chat_id=update.effective_chat.id, text=ALREADY_VOTED)
         return
