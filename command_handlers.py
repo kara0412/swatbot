@@ -2,11 +2,11 @@ import random
 import math
 
 from db_helpers import get_user_count_from_db, get_leaderboard_from_db, \
-    update_user_count_in_db, update_history_in_db
+    update_user_count_in_db, update_history_in_db, has_voted
 from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
 from strings import HELP, RULES, MY_SWATS, LEADERBOARD, CONVERSION, \
-    SWAT_COUNT_NO_MENTION, SWAT_COUNT, PRAISE_MESSAGES, VOTE
+    SWAT_COUNT_NO_MENTION, SWAT_COUNT, PRAISE_MESSAGES, VOTE, ALREADY_VOTED
 
 
 def start(update, context):
@@ -26,6 +26,9 @@ def rules(update, context):
 def voting(update, context):
     user = update.effective_user
     id = user.username or user.id
+    if has_voted(id):
+        context.bot.send_message(ALREADY_VOTED)
+        return
     username_present = bool(user.username) or False
     old_count = get_user_count_from_db(str(id).lower())
     to_subtract = math.ceil(old_count*0.1)
