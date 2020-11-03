@@ -12,7 +12,8 @@ from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, \
     ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
-    get_nth_recent_swat_time, update_history_in_db
+    get_nth_recent_swat_time, update_history_in_db, get_all_users_from_db, \
+    username_is_present
 
 import sentry_sdk
 sentry_sdk.init(env_vars["SENTRY_DSN"])
@@ -124,7 +125,10 @@ def mention_response(update, context):
             for entity in entities:
                 count = get_count_after_mention(entity, text)
                 if isinstance(count, int):
-
+                    if count > 0:
+                        context.bot.send_message(chat_id=update.effective_chat.id,
+                                                 text="Today, we're not adding any swats to our friends. Feel free to subtract up to 5 swats instead!")
+                        return
                     username_present, mention_text, receiver_id, name = get_mention_properties(entity, entities)
 
                     # Did the sender violate any rules?
@@ -138,8 +142,22 @@ def mention_response(update, context):
                         return
 
                     # No penalty; update receiver swat count as usual
-                    old_count = get_user_count_from_db(receiver_id)
+
+                    #EVERYONE
                     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
+                    if str(receiver_id).lower() == "everyone":
+                        users = get_all_users_from_db()
+                        for user in users:
+                            user_id = user[0]
+                            if str(user_id) != str(from_user_id):
+                                update_user_count_in_db(user_id, username_is_present(user_id), count)
+                        update_history_in_db(from_user_id, 'everyone', count)
+                        context.bot.send_message(chat_id=update.effective_chat.id,
+                                                 text="%s has subtracted %d swats from everyone." %
+                                                      (from_user.first_name, abs(count)))
+                        return
+
+                    old_count = get_user_count_from_db(receiver_id)
                     update_user_count_in_db(receiver_id, username_present, count)
                     update_history_in_db(from_user_id, receiver_id, count)
                     new_count = get_user_count_from_db(receiver_id)
@@ -156,7 +174,9 @@ def mention_response(update, context):
 def main():
     """Start the bot."""
     from command_handlers import \
-        start, rules, my_swats, swat_count, conversion, leaderboard, resolve, help
+        start, rules, my_swats, swat_count, conversion, leaderboard, resolve, \
+        help, voting
+    vote_handler = CommandHandler('voted', voting)
     start_handler = CommandHandler('start', start)
     rules_handler = CommandHandler('rules', rules)
     my_swats_handler = CommandHandler('my_swats', my_swats)
@@ -169,7 +189,7 @@ def main():
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
                                 leaderboard_handler, help_handler, resolve_handler,
-                                mention_handler])
+                                mention_handler, vote_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()
