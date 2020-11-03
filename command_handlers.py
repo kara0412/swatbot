@@ -25,12 +25,12 @@ def rules(update, context):
 
 def voting(update, context):
     user = update.effective_user
-    id = user.username or user.id
+    id = user.username.lower() or user.id
     if has_voted(id):
         context.bot.send_message(chat_id=update.effective_chat.id, text=ALREADY_VOTED)
         return
     username_present = bool(user.username) or False
-    old_count = get_user_count_from_db(str(id).lower())
+    old_count = get_user_count_from_db(str(id))
     to_subtract = math.ceil(old_count*0.1)
     new_count = old_count - to_subtract
     update_user_count_in_db(id, username_present, new_count)
