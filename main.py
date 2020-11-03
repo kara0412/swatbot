@@ -9,7 +9,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, BaseFilter
 
 from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
-from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, ERROR_MSG
+from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, \
+    ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
     get_nth_recent_swat_time, update_history_in_db, get_all_users_from_db, \
     username_is_present
@@ -114,6 +115,8 @@ def send_penalty(penalty_message, from_user, context, update, penalty=None):
 
 
 def mention_response(update, context):
+    if update.effective_chat.id == env_vars["CHAT_ID"]:
+        return
     try:
         from_user = update.message.from_user
         entities = message_contains_mentions(update.message)
