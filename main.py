@@ -153,7 +153,9 @@ def mention_response(update, context):
 def main():
     """Start the bot."""
     from command_handlers import \
-        start, rules, my_swats, swat_count, conversion, leaderboard, resolve, help
+        start, rules, my_swats, swat_count, conversion, leaderboard, resolve, \
+        help, voting
+    vote_handler = CommandHandler('voted', voting)
     start_handler = CommandHandler('start', start)
     rules_handler = CommandHandler('rules', rules)
     my_swats_handler = CommandHandler('my_swats', my_swats)
@@ -166,7 +168,7 @@ def main():
     add_handlers_to_dispatcher([start_handler, rules_handler, my_swats_handler,
                                 swat_count_handler, conversion_handler,
                                 leaderboard_handler, help_handler, resolve_handler,
-                                mention_handler])
+                                mention_handler, vote_handler])
     updater.start_webhook(listen='0.0.0.0', port=env_vars["PORT"], url_path=env_vars["TOKEN"])
     updater.bot.set_webhook(env_vars["WEBHOOK_URL"] + env_vars["TOKEN"])
     updater.idle()

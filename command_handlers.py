@@ -1,11 +1,12 @@
 import random
+import math
 
 from db_helpers import get_user_count_from_db, get_leaderboard_from_db, \
     update_user_count_in_db, update_history_in_db
 from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
 from strings import HELP, RULES, MY_SWATS, LEADERBOARD, CONVERSION, \
-    SWAT_COUNT_NO_MENTION, SWAT_COUNT, PRAISE_MESSAGES
+    SWAT_COUNT_NO_MENTION, SWAT_COUNT, PRAISE_MESSAGES, VOTE
 
 
 def start(update, context):
@@ -21,6 +22,19 @@ def rules(update, context):
          env_vars["MAX_INC"], env_vars["MAX_DEC"], env_vars["PER_PERSON_TIME_LIMIT"],
          env_vars["TIME_WINDOW_LIMIT_COUNT"], env_vars["TIME_WINDOW"],
          env_vars["RETALIATION_TIME"], env_vars["PENALTY"]))
+
+def voting(update, context):
+    user = update.effective_user
+    id = user.username or user.id
+    username_present = bool(user.username) or False
+    old_count = get_user_count_from_db(str(id).lower())
+    to_subtract = math.ceil(old_count*0.1)
+    new_count = old_count - to_subtract
+    update_user_count_in_db(id, username_present, new_count)
+    update_history_in_db('vote_resolver', id, -(to_subtract))
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text= VOTE % (user.first_name, to_subtract, new_count))
+
 
 def my_swats(update, context):
     from_user = update.message.from_user
