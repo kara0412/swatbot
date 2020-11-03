@@ -27,7 +27,7 @@ def voting(update, context):
     user = update.effective_user
     id = user.username or user.id
     if has_voted(id):
-        context.bot.send_message(ALREADY_VOTED)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=ALREADY_VOTED)
         return
     username_present = bool(user.username) or False
     old_count = get_user_count_from_db(str(id).lower())
