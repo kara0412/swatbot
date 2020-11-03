@@ -11,7 +11,8 @@ from mention_helpers import message_contains_mentions, get_mention_properties
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, ERROR_MSG
 from db_helpers import update_user_count_in_db, get_user_count_from_db, \
-    get_nth_recent_swat_time, update_history_in_db
+    get_nth_recent_swat_time, update_history_in_db, get_all_users_from_db, \
+    username_is_present
 
 import sentry_sdk
 sentry_sdk.init(env_vars["SENTRY_DSN"])
@@ -138,8 +139,22 @@ def mention_response(update, context):
                         return
 
                     # No penalty; update receiver swat count as usual
-                    old_count = get_user_count_from_db(receiver_id)
+
+                    #EVERYONE
                     from_user_id = from_user.id if not from_user.username else from_user.username.lower()
+                    if str(receiver_id).lower() == "everyone":
+                        users = get_all_users_from_db()
+                        for user in users:
+                            user_id = user[0]
+                            if str(user_id) != str(from_user_id):
+                                update_user_count_in_db(user_id, username_is_present(user_id), count)
+                        update_history_in_db(from_user_id, 'everyone', count)
+                        context.bot.send_message(chat_id=update.effective_chat.id,
+                                                 text="%s has subtracted %d swats from everyone." %
+                                                      (from_user.first_name, abs(count)))
+                        return
+
+                    old_count = get_user_count_from_db(receiver_id)
                     update_user_count_in_db(receiver_id, username_present, count)
                     update_history_in_db(from_user_id, receiver_id, count)
                     new_count = get_user_count_from_db(receiver_id)
