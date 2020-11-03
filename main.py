@@ -121,7 +121,10 @@ def mention_response(update, context):
             for entity in entities:
                 count = get_count_after_mention(entity, text)
                 if isinstance(count, int):
-
+                    if count > 0:
+                        context.bot.send_message(chat_id=update.effective_chat.id,
+                                                 text="Today, we're not adding any swats to our friends. Feel free to subtract up to 5 swats instead!")
+                        return
                     username_present, mention_text, receiver_id, name = get_mention_properties(entity, entities)
 
                     # Did the sender violate any rules?
