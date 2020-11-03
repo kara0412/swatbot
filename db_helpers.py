@@ -15,7 +15,7 @@ def has_voted(user_id):
     sql = """SELECT * FROM history WHERE giver='vote_resolver' and receiver=%s"""
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute(sql, (str(user_id)))
+    cur.execute(sql, str(user_id))
     return cur.rowcount == 1
 
 def update_history_in_db(giver, receiver, count):
