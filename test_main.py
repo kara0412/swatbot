@@ -3,12 +3,12 @@ import uuid
 
 import psycopg2
 
-from command_handlers import resolve, my_swats, swat_count, rules, voting
+from command_handlers import resolve, my_swats, swat_count, rules
 from db_helpers import get_conn
 from main import mention_response
 from settings import env_vars
 from strings import SWAT_UPDATE_STRING, PENALTY_SCOLDS, MILESTONES, MY_SWATS, \
-    SWAT_COUNT, RULES, SWAT_COUNT_NO_MENTION, PRAISE_MESSAGES, VOTE
+    SWAT_COUNT, RULES, SWAT_COUNT_NO_MENTION, PRAISE_MESSAGES
 from telegram import Message, Update, User, Chat, MessageEntity
 from datetime import datetime
 
@@ -142,12 +142,6 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         update = Update(uuid.uuid4(), message=m)
         mention_response(update, self.context)
 
-    def call_voting(self):
-        m = Message(uuid.uuid4(), self.mentioned_user, datetime.now(), self.chat,
-                    text='/voted')
-        update = Update(uuid.uuid4(), message=m)
-        voting(update, self.context)
-
     def call_my_swats(self):
         m = Message(uuid.uuid4(), self.mentioned_user, datetime.now(), self.chat,
                     text='/my_swats')
@@ -234,11 +228,6 @@ class TestMentionHandlerBaseNoUsernames(unittest.TestCase):
         expected_message = [MY_SWATS % (self.mentioned_user.first_name, env_vars["MAX_INC"] - 1)]
         self.assert_chat_called_with(expected_message)
 
-    def test_voting(self):
-        self.call_handler_with_message('@%s +%d' % (self.mention_text, 15))
-        self.call_voting()
-        expected_message = [VOTE % self.mentioned_user.first_name, 2, 13]
-        self.assert_chat_called_with(expected_message)
 
     def test_swat_count(self):
         # zero swats

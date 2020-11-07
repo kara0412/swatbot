@@ -11,13 +11,6 @@ in_memory_swat_count_dict = defaultdict(int)
 def get_conn():
     return psycopg2.connect(env_vars["DATABASE_URL"], sslmode='require')
 
-def has_voted(user_id):
-    sql = """SELECT * FROM history WHERE giver='vote_resolver' and receiver=%s"""
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(sql, (str(user_id),))
-    return cur.rowcount == 1
-
 def update_history_in_db(giver, receiver, count):
     sql = """INSERT INTO history (giver, receiver, count, timestamp)
              VALUES (%s, %s, %s, %s)"""

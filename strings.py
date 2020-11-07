@@ -4,8 +4,6 @@ from collections import OrderedDict
 
 SWAT_UPDATE_STRING = "%s's swat count has now %s to %d." # name, "increased" or "decreased," count
 MY_SWATS = "%s, your swat count is %d."
-VOTE = "Thanks for being a good citizen, %s! You get %d swats off, for a new swat count of %d."
-ALREADY_VOTED = "You've already voted! Come back in 2024."
 SWAT_COUNT_NO_MENTION = "You need to mention a user, like: /swat_count @Joe"
 SWAT_COUNT = "%s's swat count is %d."
 RULES = "Hi, I'm SwatBot! You can use me to give your friends swats, and I'll keep track of " \
